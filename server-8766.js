@@ -14,4 +14,4 @@ const server = http.createServer((req,res)=>{
     res.end(data);
   });
 });
-server.listen(8766, '127.0.0.1', () => console.log('http://127.0.0.1:8766/baseball-mobile.html?v=v8'));
+server.listen(8766, '127.0.0.1', () => console.log('http://127.0.0.1:8766/baseball-mobile.html'));

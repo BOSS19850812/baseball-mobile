@@ -3,7 +3,7 @@
     "name":  "携帯用 野球速報",
     "short_name":  "野球速報",
     "description":  "スマホで使える野球速報・スコア入力アプリ",
-    "start_url":  "./index.html",
+    "start_url":  "./baseball-mobile.html",
     "scope":  "./",
     "display":  "standalone",
     "background_color":  "#000000",
