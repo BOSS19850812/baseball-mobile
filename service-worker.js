@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v23";
+﻿const CACHE_NAME = "baseball-mobile-v24";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -38,6 +38,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 
