@@ -1,4 +1,4 @@
-const CACHE_NAME = "baseball-mobile-v27";
+const CACHE_NAME = "baseball-mobile-v28";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
