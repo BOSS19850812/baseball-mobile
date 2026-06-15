@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: baseball-live-mobile
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: baseball-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_VERSION
+        value: v43-render-ready
+      - key: DATA_DIR
+        value: /var/data
+      - key: APP_BASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_TTS_MODEL
+        value: gpt-4o-mini-tts
+      - key: OPENAI_TTS_VOICE
+        value: cedar
+      - key: OPENAI_TTS_INSTRUCTIONS
+        value: 日本語のスポーツ実況アナウンサーのように、明るく自然に読み上げてください。
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false

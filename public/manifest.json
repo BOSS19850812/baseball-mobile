@@ -1,0 +1,26 @@
+{
+  "id": "baseball-mobile-score",
+  "name": "携帯用 野球速報",
+  "short_name": "野球速報",
+  "description": "スマホで使える野球速報・スコア入力アプリ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "purpose": "any maskable",
+      "type": "image/png",
+      "sizes": "192x192",
+      "src": "./icon-192.png"
+    },
+    {
+      "purpose": "any maskable",
+      "type": "image/png",
+      "sizes": "512x512",
+      "src": "./icon-512.png"
+    }
+  ]
+}
