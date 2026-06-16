@@ -116,7 +116,7 @@ const Account=(()=>{
   function statusText(){if(!state.user)return '未ログイン：無料プランとして利用中';const badge=state.paid?'<span class="plan-badge pro">有料</span>':'<span class="plan-badge">無料</span>';return badge+' '+state.user.email+' / '+(state.paid?'有料機能が使えます':'無料プランです')}
   function render(){const el=$('accountStatus');if(el)el.innerHTML=statusText();const email=$('accountEmail');if(email&&state.user)email.value=state.user.email}
   async function refresh(){try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;render();verifyCheckout()}catch(e){render()}}
-  async function verifyCheckout(){const p=new URLSearchParams(location.search);if(p.get('checkout')!=='success'||!p.get('session_id')||!state.user)return;try{const data=await api('/api/billing/verify-session?session_id='+encodeURIComponent(p.get('session_id')),{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();history.replaceState(null,'',location.pathname+'?v=v44-render-docs')}catch(e){console.warn(e)}}
+  async function verifyCheckout(){const p=new URLSearchParams(location.search);if(p.get('checkout')!=='success'||!p.get('session_id')||!state.user)return;try{const data=await api('/api/billing/verify-session?session_id='+encodeURIComponent(p.get('session_id')),{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();history.replaceState(null,'',location.pathname+'?v=v45-tts-test-fix')}catch(e){console.warn(e)}}
   async function login(){const email=($('accountEmail')?.value||'').trim();if(!email){alert('メールアドレスを入力してください');return}try{const data=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email})});state.user=data.user;state.paid=!!data.paid;render()}catch(e){alert(e.message)}}
   async function logout(){try{await api('/api/auth/logout',{method:'POST'});state={user:null,paid:false};render()}catch(e){alert(e.message)}}
   async function startCheckout(){try{const data=await api('/api/billing/checkout',{method:'POST'});if(data.url){location.href=data.url;return}alert(data.message||'決済画面はまだ未設定です')}catch(e){alert(e.message)}}
@@ -274,14 +274,30 @@ const Commentary=(()=>{
     speechSynthesis.speak(u);
   }
   async function playOpenAi(text){
+    let url='';
     try{
       const res=await fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text})});
-      if(!res.ok){playBrowser(text);return}
+      if(!res.ok){
+        const err=await res.json().catch(()=>({}));
+        console.warn('OpenAI TTS failed',err);
+        playBrowser(text);
+        return;
+      }
       const blob=await res.blob();
-      const url=URL.createObjectURL(blob);
-      await new Promise(resolve=>{const a=new Audio(url);a.onended=resolve;a.onerror=resolve;a.play().catch(resolve)});
-      URL.revokeObjectURL(url);
-    }catch(e){playBrowser(text)}
+      url=URL.createObjectURL(blob);
+      const audio=new Audio(url);
+      audio.preload='auto';
+      audio.volume=1;
+      window.__lastCommentaryAudio=audio;
+      await audio.play();
+      await new Promise(resolve=>{audio.onended=resolve;audio.onerror=resolve});
+    }catch(e){
+      console.warn('Audio playback failed',e);
+      playBrowser(text);
+      if(String(e&&e.name).includes('NotAllowed')) alert('ブラウザが音声再生を止めました。もう一度「テスト再生」を押してください。');
+    }finally{
+      if(url)URL.revokeObjectURL(url);
+    }
   }
   function updateUi(){
     const b=document.getElementById('voiceToggleBtn');if(b){b.textContent=settings.voiceEnabled?'音声ON':'音声OFF';b.className=settings.voiceEnabled?'commentary-toggle-on':'commentary-toggle-off'}
@@ -294,7 +310,7 @@ const Commentary=(()=>{
   function toggleVoice(){settings.voiceEnabled=!settings.voiceEnabled;saveSettings();if(!settings.voiceEnabled&&'speechSynthesis'in window)speechSynthesis.cancel();audioPlaying=false;updateUi();processQueue()}
   function setRate(v){settings.voiceRate=Math.max(.8,Math.min(1.5,Number(v)||1));saveSettings();updateUi()}
   function setEngine(v){settings.engine=v==='openai'?'openai':'browser';saveSettings();updateUi()}
-  function test(){add('1番 山田 センター前ヒット')}
+  function test(){settings.voiceEnabled=true;saveSettings();updateUi();stopCurrentSpeech();add('1番 山田 センター前ヒット')}
   function init(){load();updateUi()}
   return{init,add,speak,record,renderHistory,toggleVoice,setRate,setEngine,test,settings,commentaryQueue,makeCommentary};
 })();
@@ -442,7 +458,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v44-render-docs';
+const APP_BUILD='v45-tts-test-fix';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;

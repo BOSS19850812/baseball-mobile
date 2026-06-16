@@ -454,7 +454,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v44-render-docs', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v45-tts-test-fix', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return handleStripeWebhook(req, res);
     if (pathname.startsWith('/api/billing/')) return handleBilling(req, res, pathname);
