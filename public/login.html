@@ -1,0 +1,151 @@
+﻿<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>野球速報 ログイン</title>
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;background:#000;color:#fff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{display:flex;align-items:center;justify-content:center;padding:calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom))}
+    button,input{font:inherit}
+    .login{width:100%;max-width:460px}
+    .brand{text-align:center;margin-bottom:16px}
+    .hero{background:linear-gradient(180deg,#101010,#050505);border:1px solid #272727;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 12px 30px rgba(0,0,0,.28)}
+    .hero-copy{color:#ddd;font-size:13px;line-height:1.55;font-weight:700;margin:10px 0 0}
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+    .feature{background:#0d0d0d;border:1px solid #252525;border-radius:10px;padding:9px 6px;color:#fff;font-size:11px;font-weight:900;line-height:1.25;text-align:center}
+    .start-steps{display:grid;gap:7px;margin:10px 0 12px}
+    .start-step{background:#0b0b0b;border:1px solid #242424;border-radius:10px;padding:9px 10px;color:#ddd;font-size:12px;line-height:1.45;font-weight:800}
+    .start-step b{color:#f2b83a}
+    .mark{width:92px;height:92px;border-radius:24px;margin:0 auto 12px;background:#050505;border:1px solid #222;display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(242,184,58,.12)}
+    .mark img{width:82px;height:82px;border-radius:20px;object-fit:cover}
+    h1{margin:0;font-size:26px;font-weight:900;letter-spacing:0}
+    .sub{margin-top:6px;color:#bbb;font-size:13px;font-weight:700}
+    .card{background:#050505;border:1px solid #242424;border-radius:12px;overflow:hidden;margin-bottom:10px}
+    .head{padding:12px 14px;color:#f2b83a;border-bottom:1px solid #222;font-size:14px;font-weight:900}
+    .body{padding:14px}
+    label{display:block;color:#f2b83a;font-size:12px;font-weight:900;margin:0 0 6px}
+    input{width:100%;min-height:48px;background:#111;color:#fff;border:1px solid #333;border-radius:10px;padding:10px 12px;font-size:16px;outline:none}
+    input:focus{border-color:#f2b83a;box-shadow:0 0 0 3px rgba(242,184,58,.15)}
+    .primary,.secondary{width:100%;min-height:48px;border:0;border-radius:10px;font-weight:900;margin-top:10px}
+    .primary{background:#f2b83a;color:#111}
+    .secondary{background:#202020;color:#fff;border:1px solid #444}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
+    .note{color:#bbb;font-size:12px;line-height:1.55;margin-top:12px}
+    .status{min-height:20px;margin-top:10px;color:#f2b83a;font-size:12px;font-weight:900;line-height:1.5}
+    .foot{text-align:center;color:#777;font-size:11px;margin-top:16px;line-height:1.5}
+    .guide{display:none;padding:12px 14px;border-top:1px solid #222}
+    .guide.show{display:block}
+    .guide-title{color:#f2b83a;font-size:14px;font-weight:900;margin-bottom:8px}
+    .guide-list{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+    .guide-list li{background:#0c0c0c;border:1px solid #222;border-radius:9px;padding:9px 10px;color:#ddd;font-size:13px;line-height:1.45;font-weight:700}
+    .guide-list b{color:#fff}
+    .trial-note{margin-top:10px;color:#f2b83a;font-size:12px;font-weight:900;line-height:1.5}
+    .cover-note{color:#f2b83a;font-size:12px;font-weight:900;line-height:1.5;margin-top:10px}
+    @media(max-width:380px){h1{font-size:23px}.row{grid-template-columns:1fr}.mark{width:82px;height:82px}.mark img{width:72px;height:72px}}
+  </style>
+</head>
+<body>
+  <main class="login">
+    <section class="brand hero">
+      <div class="mark"><img src="./icon-192.png" alt=""></div>
+      <h1>野球速報</h1>
+      <div class="sub">ログインして試合管理を始める</div>
+      <div class="hero-copy">タップだけで試合経過を記録。ランナー状況、アウトカウント、打球方向、実況音声までまとめて管理できます。</div>
+      <div class="feature-grid"><div class="feature">速報入力</div><div class="feature">実況音声</div><div class="feature">成績管理</div></div>
+    </section>
+    <section class="card">
+      <div class="head">ログイン</div>
+      <div class="body">
+        <div class="start-steps"><div class="start-step"><b>1.</b> 無料で試す、またはログイン</div><div class="start-step"><b>2.</b> 入力タブでチーム名と選手名を登録</div><div class="start-step"><b>3.</b> 速報タブで試合を記録</div></div>
+        <label for="loginId">ログインID</label>
+        <input id="loginId" type="text" inputmode="text" autocomplete="username" placeholder="team-id または mail@example.com">
+        <label for="password">パスワード</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="パスワード">
+        <button class="primary" type="button" onclick="login()">ログイン</button>
+        <div class="row">
+          <button class="secondary" type="button" onclick="guest()">無料で試す</button>
+          <button class="secondary" type="button" onclick="goApp()">アプリへ戻る</button>
+        </div>
+        <button class="secondary" type="button" onclick="toggleGuide()">使い方の説明</button>
+        <div class="note">有料プラン登録や契約管理は、ログイン後にアプリ内から進められます。</div>
+        <div class="cover-note">無料お試しはこの端末で1回のみです。</div>
+        <div id="status" class="status"></div>
+      </div>
+      <div id="guideBox" class="guide">
+        <div class="guide-title">使い方</div>
+        <ul class="guide-list">
+          <li><b>1. 入力</b> でチーム名、先発投手、選手名を入れます。</li>
+          <li><b>2. 速報</b> で守備位置をタップして、ヒット・アウト・エラーを記録します。</li>
+          <li><b>3. 操作</b> でボール、ストライク、試合操作、実況音声を使います。</li>
+          <li><b>4. 成績</b> で成績確認、手動入力、バックアップ保存ができます。</li>
+        </ul>
+        <div class="trial-note">無料お試しはこの端末で1回のみです。続けて使う場合はログインしてください。</div>
+      </div>
+    </section>
+    <div class="foot">APIキーは画面には保存されません。音声実況はサーバー経由で安全に使います。</div>
+  </main>
+  <script>
+    const APP_BUILD='v57-login-id-password';
+    const $=id=>document.getElementById(id);
+    function setStatus(text){$('status').textContent=text||''}
+    function appUrl(){return './?v='+encodeURIComponent(APP_BUILD)}
+    function goApp(){location.href=appUrl()}
+    function toggleGuide(){
+      const box=$('guideBox');
+      box.classList.toggle('show');
+    }
+    function guest(){
+      if(localStorage.getItem('bb_free_trial_used')){
+        setStatus('無料お試しは1回のみです。ログインIDでログインしてください。');
+        $('loginId').focus();
+        return;
+      }
+      localStorage.setItem('bb_free_trial_used','1');
+      localStorage.setItem('bb_guest_login','1');
+      goApp();
+    }
+    async function api(path,options={}){
+      const res=await fetch(path,{credentials:'same-origin',headers:{'content-type':'application/json',...(options.headers||{})},...options});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok)throw new Error(data.error||'通信エラー');
+      return data;
+    }
+    async function login(){
+      const loginId=$('loginId').value.trim();
+      const password=$('password').value;
+      if(!loginId){setStatus('ログインIDを入力してください');$('loginId').focus();return}
+      if(!password){setStatus('パスワードを入力してください');$('password').focus();return}
+      try{
+        setStatus('ログイン中...');
+        const data=await api('/api/auth/login',{method:'POST',body:JSON.stringify({loginId,password})});
+        if(data.user&&data.user.id)localStorage.setItem('bb_current_user_id',data.user.id);
+        localStorage.removeItem('bb_guest_login');
+        setStatus('ログインしました');
+        goApp();
+      }catch(e){
+        setStatus(e.message||'ログインできませんでした');
+      }
+    }
+    async function check(){
+      try{
+        const data=await api('/api/me');
+        if(data.user)goApp();
+      }catch(e){}
+    }
+    $('loginId').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+    $('password').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+    check();
+  </script>
+</body>
+</html>
+
+
+
+
+

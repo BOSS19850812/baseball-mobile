@@ -1,8 +1,9 @@
-﻿const CACHE_NAME = "baseball-mobile-v45-tts-test-fix";
+﻿const CACHE_NAME = "baseball-mobile-v53-bases-voice";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
-"./manifest.json",
+  "./login.html",
+  "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
   "./apple-touch-icon.png"
@@ -31,4 +32,12 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
+
+
+
+
+
+
+
 

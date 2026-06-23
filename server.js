@@ -42,11 +42,23 @@ function saveUsers(db) {
   fs.writeFileSync(USERS_FILE, JSON.stringify(db, null, 2), 'utf8');
 }
 
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const hash = crypto.scryptSync(String(password), salt, 32).toString('hex');
+  return salt + ':' + hash;
+}
+
+function verifyPassword(password, stored) {
+  if (!stored || !stored.includes(':')) return false;
+  const [salt, hash] = stored.split(':');
+  const check = crypto.scryptSync(String(password), salt, 32).toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(check, 'hex'));
+}
+
 function publicUser(user) {
   if (!user) return null;
   return {
     id: user.id,
-    email: user.email,
+    email: user.email || user.loginId,
     plan: user.plan || 'free',
     subscriptionStatus: user.subscriptionStatus || 'inactive',
     subscriptionUntil: user.subscriptionUntil || null
@@ -279,13 +291,23 @@ async function handleAuth(req, res, pathname) {
   if (pathname === '/api/auth/login') {
     if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
     const data = await readJson(req);
-    const email = String(data.email || '').trim().toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json(res, 400, { error: 'email is invalid' });
+    const loginId = String(data.loginId || data.email || '').trim().toLowerCase();
+    const password = String(data.password || '');
+    if (!/^[a-z0-9._-]{3,40}$/.test(loginId) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId)) return json(res, 400, { error: 'ログインIDは3文字以上で入力してください' });
+    if (password.length < 4) return json(res, 400, { error: 'パスワードは4文字以上で入力してください' });
     const db = loadUsers();
-    let user = db.users.find(u => u.email === email);
+    let user = db.users.find(u => (u.loginId || u.email) === loginId);
     if (!user) {
-      user = { id: crypto.randomUUID(), email, plan: 'free', subscriptionStatus: 'inactive', createdAt: new Date().toISOString() };
+      const email = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId) ? loginId : loginId + '@team.local';
+      user = { id: crypto.randomUUID(), loginId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', createdAt: new Date().toISOString() };
       db.users.push(user);
+      saveUsers(db);
+    } else if (user.passwordHash) {
+      if (!verifyPassword(password, user.passwordHash)) return json(res, 401, { error: 'ログインIDまたはパスワードが違います' });
+    } else {
+      user.loginId = user.loginId || loginId;
+      user.passwordHash = hashPassword(password);
+      user.updatedAt = new Date().toISOString();
       saveUsers(db);
     }
     const sid = crypto.randomBytes(32).toString('hex');
@@ -409,7 +431,7 @@ async function handleTts(req, res) {
         model: process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts',
         voice: process.env.OPENAI_TTS_VOICE || 'cedar',
         input: text,
-        instructions: process.env.OPENAI_TTS_INSTRUCTIONS || '日本語のスポーツ実況アナウンサーのように、明るく臨場感を持って読み上げてください。',
+        instructions: process.env.OPENAI_TTS_INSTRUCTIONS || '落ち着いた男性の日本語スポーツ実況アナウンサーとして、会話のように自然で滑らかに読んでください。短い速報文でも機械的に区切らず、聞き取りやすいテンポで、明るさと臨場感を少し加えてください。',
         response_format: 'mp3'
       })
     });
@@ -454,7 +476,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v45-tts-test-fix', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v53-bases-voice', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return handleStripeWebhook(req, res);
     if (pathname.startsWith('/api/billing/')) return handleBilling(req, res, pathname);
@@ -469,4 +491,11 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
+
+
+
+
+
+
 
