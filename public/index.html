@@ -341,7 +341,7 @@ function installTtsToggle(){if($('ttsToggleBtn')){Commentary.init();return}const
 function runnerStateText(){let bases=[];if(st.r&&st.r[1])bases.push('1塁');if(st.r&&st.r[2])bases.push('2塁');if(st.r&&st.r[3])bases.push('3塁');if(bases.length===3)return '満塁';return bases.length?bases.join('・'):'ランナーなし'}
 function outStateText(){return Math.min(3,Number(st.o)||0)+'アウト'}
 function batterStateText(){return st.ord[side()]+'番 '+name(side(),bi())}
-function hlog(t,r=0,b=true){let a=[];if(b)a.push(batterStateText());a.push(t);if(r)a.push('打点'+r);a.push(outStateText());a.push(runnerStateText());const line=a.join(' ');st.hist.push(line);Commentary.add(line);if(st.hist.length>120)st.hist.shift()}
+function hlog(t,r=0,b=true){let a=[],change=/チェンジ/.test(String(t))||Number(st.o)>=3;if(b)a.push(batterStateText());let play=change?String(t).replace(/\s*チェンジ/g,''):t;if(play)a.push(play);if(r)a.push('打点'+r);a.push(change?'3アウト チェンジ':outStateText());if(!change)a.push(runnerStateText());const line=a.join(' ');st.hist.push(line);Commentary.add(line);if(st.hist.length>120)st.hist.shift()}
 const P={left:[270,405,'fly'],center:[500,315,'fly'],right:[730,405,'fly'],thirdBase:[300,600,'ground'],short:[390,540,'ground'],secondBase:[610,540,'ground'],firstBase:[700,600,'ground'],pitcher:[500,610,'ground'],catcher:[500,735,'ground'],hrl:[205,42,'hr'],hrc:[500,20,'hr'],hrr:[795,42,'hr']};
 function aimKey(k,label=''){let t=String(label);if(k==='left'){if(/レフト線|三塁線/.test(t))return [135,365,'fly'];if(/左中間/.test(t))return [375,320,'fly'];if(/前|ポテン|テキサス/.test(t))return [285,455,'fly'];if(/オーバー|フェンス|直撃|クッション/.test(t))return [235,300,'fly'];if(/スタンド/.test(t))return [205,42,'hr'];return P.left}if(k==='center'){if(/左中間/.test(t))return [390,300,'fly'];if(/右中間/.test(t))return [610,300,'fly'];if(/前|ポテン|テキサス/.test(t))return [500,430,'fly'];if(/オーバー|フェンス|直撃|クッション/.test(t))return [500,255,'fly'];if(/バックスクリーン/.test(t))return [500,20,'hr'];return P.center}if(k==='right'){if(/ライト線|一塁線/.test(t))return [865,365,'fly'];if(/右中間/.test(t))return [625,320,'fly'];if(/前|ポテン|テキサス/.test(t))return [715,455,'fly'];if(/オーバー|フェンス|直撃|クッション/.test(t))return [765,300,'fly'];if(/スタンド/.test(t))return [795,42,'hr'];return P.right}return P[k]||P.center}
 function clearLine(){let l=$('hl'),d=$('hdot');if(l){l.className.baseVal='hitline';l.setAttribute('d','M500 770 L500 770')}if(d){d.className.baseVal='hitdot';d.setAttribute('cx',500);d.setAttribute('cy',770)}}
@@ -480,7 +480,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v57-login-id-password';
+const APP_BUILD='v59-change-no-runner';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -500,6 +500,7 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
 
 
 
