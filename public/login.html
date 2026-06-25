@@ -101,13 +101,9 @@
       box.classList.toggle('show');
     }
     function guest(){
-      if(localStorage.getItem('bb_free_trial_used')){
-        setStatus('無料お試しは1回のみです。ログインIDでログインしてください。');
-        $('loginId').focus();
-        return;
-      }
       localStorage.setItem('bb_free_trial_used','1');
       localStorage.setItem('bb_guest_login','1');
+      setStatus('無料お試しで開きます');
       goApp();
     }
     async function api(path,options={}){
@@ -144,6 +140,7 @@
   </script>
 </body>
 </html>
+
 
 
 
