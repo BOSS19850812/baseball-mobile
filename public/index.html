@@ -400,7 +400,7 @@ function applyRunnerPlay(o){snap();let batter=bi(),runs={1:st.r[1],2:st.r[2],3:s
 function applyHitAdvance(kind,key,label,mode){if(mode==='close'){closeSheets();return}if(mode==='back'){fieldMenu(key);return}if(mode==='normal'){closeSheets();return hit(Number(kind.replace('hit','')),key,label)}let hitBase=kind==='hit1'?1:kind==='hit2'?2:3,isErr=mode==='erradv'||mode==='throwadv',batBase=/^b[123]$/.test(mode)?Number(mode[1]):hitBase,moves=HIT_MOVES[mode]||HIT_MOVES.b1,playLabel=label;if(isErr){moves=hitBase===1?{r3:'H',r2:'H',r1:3}:hitBase===2?{r3:'H',r2:'H',r1:'H'}:{r3:'H',r2:'H',r1:'H'};batBase=hitBase===1?2:3;playLabel=label+(mode==='throwadv'?' 悪送球進塁':' エラー進塁')}applyRunnerPlay({key:key,label:playLabel,moves:moves,batBase:batBase,stat:kind==='hit1'?'1b':kind==='hit2'?'2b':'3b',countHit:true,isErr:isErr,sub:isErr?'ERROR':'走者選択',flash:isErr?'ERROR':'HIT'})}
 function fma(c){if(/^hit[123]:/.test(c))return hitAdvanceMenu(c);if(/^out:/.test(c))return outAdvanceMenu(c);closeSheets();act(c)}function closeSheets(){$('fm').classList.remove('show');$('rm').classList.remove('show')}
 function infieldRunMenu(c){let [kind,key,label]=c.split(':'),cls=kind==='err'?'err':kind==='out'?'sp':'hit';$('fmt').textContent=(label||'内野プレー')+' 走者選択';let opts=[['通常','normal',cls],['打者1塁','b1','hit'],['打者2塁','b2','dbl'],['1塁走者2塁','r1to2','hit'],['1塁走者3塁','r1to3','dbl'],['2塁走者3塁','r2to3','dbl'],['2塁走者生還','r2home','tri'],['3塁走者生還','r3home','tri'],['満塁1点','bases1','tri'],['悪送球進塁','throwadv','err'],['エラー進塁','erradv','err'],['戻る','back','close'],['閉じる','close','close']];$('fmg').innerHTML=opts.map(x=>`<button class="${x[2]}" onclick="applyInfieldRun('${kind}','${key}','${label||'内野プレー'}','${x[1]}')">${x[0]}</button>`).join('')+undoButton();$('fm').classList.add('show');fitMenuButtons()}
-function applyInfieldRun(kind,key,label,mode){if(mode==='close'){closeSheets();return}if(mode==='back'){fieldMenu(key);return}if(mode==='normal'){closeSheets();return act(`::`)}let isThrow=mode==='throwadv',isExtraErr=mode==='erradv'||isThrow,isErr=kind==='err'||isExtraErr,isOut=kind==='out',moves=INF_MOVES[mode]||INF_MOVES.b1,batBase=mode==='b2'?2:1,playLabel=label;if(isExtraErr){moves={r3:'H',r2:'H',r1:3};batBase=2;playLabel=label+(isThrow?' 悪送球進塁':' エラー進塁')}applyRunnerPlay({key:key,label:playLabel,moves:moves,batBase:batBase,stat:kind==='hit1'?'1b':(isOut&&isSacLabel(label)?'sac':null),countHit:kind==='hit1',isErr:isErr,isOut:isOut,sub:isErr?'ERROR':isOut?'OUT':'RUN',flash:isErr?'ERROR':'RUN'})}function outfieldDetail(z,type){
+function applyInfieldRun(kind,key,label,mode){if(mode==='close'){closeSheets();return}if(mode==='back'){fieldMenu(key);return}if(mode==='normal'){closeSheets();return act(`${kind}:${key}:${label}`)}let isThrow=mode==='throwadv',isExtraErr=mode==='erradv'||isThrow,isErr=kind==='err'||isExtraErr,isOut=kind==='out',moves=INF_MOVES[mode]||INF_MOVES.b1,batBase=mode==='b2'?2:1,playLabel=label;if(isExtraErr){moves={r3:'H',r2:'H',r1:3};batBase=2;playLabel=label+(isThrow?' 悪送球進塁':' エラー進塁')}applyRunnerPlay({key:key,label:playLabel,moves:moves,batBase:batBase,stat:kind==='hit1'?'1b':(isOut&&isSacLabel(label)?'sac':null),countHit:kind==='hit1',isErr:isErr,isOut:isOut,sub:isErr?'ERROR':isOut?'OUT':'RUN',flash:isErr?'ERROR':'RUN'})}function outfieldDetail(z,type){
   let n=Z[z],gap=z==='left'?'左中間':z==='right'?'右中間':'左中間・右中間',line=z==='left'?'レフト線':z==='right'?'ライト線':n+'前',stand=z==='left'?'レフトスタンド':z==='right'?'ライトスタンド':'バックスクリーン',items=[];
   if(type==='hit')items=[
     [n+'前ヒット',`hit1:${z}:${n}前ヒット`,'hit'],[line+'ヒット',`hit1:${z}:${line}ヒット`,'hit'],[gap+'ヒット',`hit1:${z}:${gap}ヒット`,'hit'],
@@ -481,7 +481,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v66-infield-hit-error-advance';
+const APP_BUILD='v67-infield-normal-fix';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -501,6 +501,8 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
+
 
 
 
