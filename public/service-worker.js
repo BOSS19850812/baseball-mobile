@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v69-added-voice-sample";
+﻿const CACHE_NAME = "baseball-mobile-v68-outfield-error-advance";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -6,8 +6,7 @@ const FILES_TO_CACHE = [
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
-  "./apple-touch-icon.png",
-  "./audio/esuroku-voice-sample.mp3"
+  "./apple-touch-icon.png"
 ];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE)));
@@ -33,6 +32,8 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
+
 
 
 
