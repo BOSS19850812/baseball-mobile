@@ -83,7 +83,7 @@
     </div>
     <div class="card"><div class="head">速報履歴</div><div class="hist" id="hist2"></div></div>
   </div>
-  <div id="ops" class="page"><div class="card"><div class="head">実況設定</div><div class="commentary-panel"><div class="commentary-tools"><button id="voiceToggleBtn" type="button" onclick="Commentary.toggleVoice()">音声OFF</button><button class="btn2" type="button" onclick="Commentary.test()">テスト再生</button></div><div class="commentary-row"><span>速度</span><input id="voiceRateRange" type="range" min="0.8" max="1.5" step="0.1" value="1.1" oninput="Commentary.setRate(this.value)"><b id="voiceRateLabel">1.1</b></div><div class="commentary-row"><span>方式</span><select id="voiceEngineSelect" onchange="Commentary.setEngine(this.value)"><option value="browser">無料音声</option><option value="openai">OpenAI TTS</option></select><b></b></div><div class="input-help">通常は無料音声で使えます。OpenAI TTSはサーバーの.envにAPIキーを入れた時だけ使えます。</div><div class="commentary-history" id="commentaryHistory"><div class="commentary-item">実況履歴なし</div></div></div></div><div class="card"><div class="head">操作メニュー アプリ化版v28</div><div class="input-help">試合操作を一番上にしました。青=出塁・長打、赤=アウト、紫=走塁・投球、水色=カウントです。</div></div><div class="ops" id="opbox"></div></div>
+  <div id="ops" class="page"><div class="card"><div class="head">実況設定</div><div class="commentary-panel"><div class="commentary-tools"><button id="voiceToggleBtn" type="button" onclick="Commentary.toggleVoice()">音声OFF</button><button class="btn2" type="button" onclick="Commentary.test()">テスト再生</button><button class="btn2" type="button" onclick="playAddedVoiceSample()">追加音声を再生</button></div><div class="commentary-row"><span>速度</span><input id="voiceRateRange" type="range" min="0.8" max="1.5" step="0.1" value="1.1" oninput="Commentary.setRate(this.value)"><b id="voiceRateLabel">1.1</b></div><div class="commentary-row"><span>方式</span><select id="voiceEngineSelect" onchange="Commentary.setEngine(this.value)"><option value="browser">無料音声</option><option value="openai">OpenAI TTS</option></select><b></b></div><div class="input-help">通常は無料音声で使えます。OpenAI TTSはサーバーの.envにAPIキーを入れた時だけ使えます。</div><div class="commentary-history" id="commentaryHistory"><div class="commentary-item">実況履歴なし</div></div></div></div><div class="card"><div class="head">操作メニュー アプリ化版v28</div><div class="input-help">試合操作を一番上にしました。青=出塁・長打、赤=アウト、紫=走塁・投球、水色=カウントです。</div></div><div class="ops" id="opbox"></div></div>
   <div id="subs" class="page"><div class="card"><div class="head">交代入力</div><div class="input-help">代打・代走・守備交代を選んで、打順に入る選手を変更できます。</div><div class="form-block"><label><span class="form-label">チーム</span><select id="subTeam"><option value="home">ホーム</option><option value="away">ビジター</option></select></label><label><span class="form-label">交代種類</span><select id="subType"><option>代打</option><option>代走</option><option>守備交代</option></select></label><label><span class="form-label">交代する打順</span><select id="subOrder"></select></label><label><span class="form-label">新しく入る選手</span><select id="subPlayer"></select></label><label><span class="form-label">守備位置</span><select id="subPos"></select></label><button class="save" onclick="doSub()">交代を反映</button></div></div><div class="card"><div class="head">現在の打順</div><div id="subCur"></div></div></div>
   <div id="stats" class="page"><div class="card"><div class="head">ホーム打撃成績</div><div class="scroll" id="batStats"></div></div><div class="card"><div class="head">手動入力 成績</div><div class="input-help">成績リセットの前に、ここからホーム選手の年間成績を直接入力できます。</div><div class="manual-tools"><button class="save" onclick="openManualStats()">手動入力を開く</button><button class="btn2" onclick="closeManualStats()">閉じる</button></div><div id="manualStatsBox" class="manual-stats"><div id="manualStatsArea" class="manual-grid"></div><div class="manual-tools"><button class="save" onclick="saveManualStats()">手動成績を保存</button><button class="btn2" onclick="closeManualStats()">閉じる</button></div></div></div><div class="card"><div class="head">保存データ バックアップ</div><div class="backup-note">選手名、成績、試合状況をJSONファイルに保存できます。Safariの履歴削除や機種変更の前に書き出してください。</div><div class="backup-tools"><button class="save" type="button" onclick="exportBackup()">バックアップを書き出し</button><button class="btn2" type="button" onclick="chooseBackupFile()">バックアップを読み込み</button><input id="backupFile" type="file" accept="application/json,.json" onchange="importBackupFile(this)"></div><div class="backup-status" id="backupStatus">未実行</div></div><button class="btn2" onclick="resetStats()">成績リセット</button></div>
   <div id="input" class="page">
@@ -333,6 +333,7 @@ const Commentary=(()=>{
   function init(){load();updateUi()}
   return{init,add,speak,record,renderHistory,toggleVoice,setRate,setEngine,test,settings,commentaryQueue,makeCommentary};
 })();
+function playAddedVoiceSample(){let audio=new Audio('./audio/esuroku-voice-sample.mp3');audio.volume=1;audio.play().catch(()=>alert('音声再生が止められました。もう一度ボタンを押してください。'))}
 function isTtsEnabled(){return Commentary.settings.voiceEnabled}
 function setTtsEnabled(on){Commentary.settings.voiceEnabled=!!on;localStorage.setItem('bb_commentary_settings_v1',JSON.stringify(Commentary.settings));Commentary.init()}
 function speakPlayText(text){Commentary.speak(text)}
@@ -481,7 +482,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v68-outfield-error-advance';
+const APP_BUILD='v69-added-voice-sample';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -501,6 +502,8 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
+
 
 
 
