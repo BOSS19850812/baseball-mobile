@@ -294,18 +294,7 @@ const Commentary=(()=>{
     speechSynthesis.speak(u);
   }
   async function playOpenAi(text){
-    let url='';
     try{
-      const res=await fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:speechText(text)})});
-      if(!res.ok){
-        const err=await res.json().catch(()=>({}));
-        console.warn('Server TTS failed',err);
-        alert('ElevenLabs音声の作成に失敗しました。APIキーとVoice IDを確認してください。');
-        return;
-      }
-      const blob=await res.blob();
-      if(!blob.size)throw new Error('empty audio');
-      url=URL.createObjectURL(blob);
       let audio=document.getElementById('serverTtsAudio');
       if(!audio){
         audio=document.createElement('audio');
@@ -315,7 +304,7 @@ const Commentary=(()=>{
         document.body.appendChild(audio);
       }
       audio.pause();
-      audio.src=url;
+      audio.src='/api/tts?text='+encodeURIComponent(speechText(text))+'&t='+Date.now();
       audio.preload='auto';
       audio.volume=1;
       window.__lastCommentaryAudio=audio;
@@ -324,8 +313,6 @@ const Commentary=(()=>{
     }catch(e){
       console.warn('Audio playback failed',e);
       alert('ElevenLabs音声を再生できませんでした。もう一度テスト再生を押してください。理由: '+(e&&e.message?e.message:e));
-    }finally{
-      if(url)URL.revokeObjectURL(url);
     }
   }
   async function syncServerTts(){
@@ -503,7 +490,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v74-elevenlabs-audio-element';
+const APP_BUILD='v75-direct-audio-tts';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -523,6 +510,7 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
 
 
 

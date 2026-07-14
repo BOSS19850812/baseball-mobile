@@ -405,12 +405,12 @@ async function handleBilling(req, res, pathname) {
 }
 
 async function handleTts(req, res) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return send(res, 405, JSON.stringify({ error: 'method not allowed' }), { 'content-type': 'application/json; charset=utf-8' });
   }
 
   try {
-    const data = await readJson(req);
+    const data = req.method === 'GET' ? Object.fromEntries(new URL(req.url, 'http://localhost').searchParams) : await readJson(req);
     const text = String(data.text || '').trim().slice(0, 1000);
     if (!text) {
       return send(res, 400, JSON.stringify({ error: 'text is required' }), { 'content-type': 'application/json; charset=utf-8' });
@@ -425,7 +425,7 @@ async function handleTts(req, res) {
       if (!apiKey || !voiceId) {
         return send(res, 500, JSON.stringify({ error: 'ELEVENLABS_API_KEY or ELEVENLABS_VOICE_ID is not set on the server' }), { 'content-type': 'application/json; charset=utf-8' });
       }
-      response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId), {
+      response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId) + '?output_format=mp3_44100_128', {
         method: 'POST',
         headers: {
           'xi-api-key': apiKey,
@@ -532,6 +532,9 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
+
+
 
 
 
