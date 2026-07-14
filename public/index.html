@@ -304,8 +304,18 @@ const Commentary=(()=>{
         return;
       }
       const blob=await res.blob();
+      if(!blob.size)throw new Error('empty audio');
       url=URL.createObjectURL(blob);
-      const audio=new Audio(url);
+      let audio=document.getElementById('serverTtsAudio');
+      if(!audio){
+        audio=document.createElement('audio');
+        audio.id='serverTtsAudio';
+        audio.setAttribute('playsinline','');
+        audio.style.display='none';
+        document.body.appendChild(audio);
+      }
+      audio.pause();
+      audio.src=url;
       audio.preload='auto';
       audio.volume=1;
       window.__lastCommentaryAudio=audio;
@@ -313,7 +323,7 @@ const Commentary=(()=>{
       await new Promise(resolve=>{audio.onended=resolve;audio.onerror=resolve});
     }catch(e){
       console.warn('Audio playback failed',e);
-      if(String(e&&e.name).includes('NotAllowed')) alert('ブラウザが音声再生を止めました。もう一度「テスト再生」を押してください。');
+      alert('ElevenLabs音声を再生できませんでした。もう一度テスト再生を押してください。理由: '+(e&&e.message?e.message:e));
     }finally{
       if(url)URL.revokeObjectURL(url);
     }
@@ -493,7 +503,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v73-force-elevenlabs-tts';
+const APP_BUILD='v74-elevenlabs-audio-element';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -513,6 +523,7 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
 
 
 
