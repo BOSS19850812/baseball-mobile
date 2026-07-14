@@ -409,11 +409,6 @@ async function handleTts(req, res) {
     return send(res, 405, JSON.stringify({ error: 'method not allowed' }), { 'content-type': 'application/json; charset=utf-8' });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return send(res, 500, JSON.stringify({ error: 'OPENAI_API_KEY is not set on the server' }), { 'content-type': 'application/json; charset=utf-8' });
-  }
-
   try {
     const data = await readJson(req);
     const text = String(data.text || '').trim().slice(0, 1000);
@@ -421,24 +416,57 @@ async function handleTts(req, res) {
       return send(res, 400, JSON.stringify({ error: 'text is required' }), { 'content-type': 'application/json; charset=utf-8' });
     }
 
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'authorization': 'Bearer ' + apiKey,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts',
-        voice: process.env.OPENAI_TTS_VOICE || 'cedar',
-        input: text,
-        instructions: process.env.OPENAI_TTS_INSTRUCTIONS || '落ち着いた男性の日本語スポーツ実況アナウンサーとして、会話のように自然で滑らかに読んでください。短い速報文でも機械的に区切らず、聞き取りやすいテンポで、明るさと臨場感を少し加えてください。',
-        response_format: 'mp3'
-      })
-    });
+    const provider = String(process.env.TTS_PROVIDER || 'openai').toLowerCase();
+    let response;
+
+    if (provider === 'elevenlabs') {
+      const apiKey = process.env.ELEVENLABS_API_KEY;
+      const voiceId = process.env.ELEVENLABS_VOICE_ID;
+      if (!apiKey || !voiceId) {
+        return send(res, 500, JSON.stringify({ error: 'ELEVENLABS_API_KEY or ELEVENLABS_VOICE_ID is not set on the server' }), { 'content-type': 'application/json; charset=utf-8' });
+      }
+      response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId), {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'accept': 'audio/mpeg',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          text,
+          model_id: process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: Number(process.env.ELEVENLABS_STABILITY || 0.45),
+            similarity_boost: Number(process.env.ELEVENLABS_SIMILARITY_BOOST || 0.85),
+            style: Number(process.env.ELEVENLABS_STYLE || 0.25),
+            use_speaker_boost: true
+          }
+        })
+      });
+    } else {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return send(res, 500, JSON.stringify({ error: 'OPENAI_API_KEY is not set on the server' }), { 'content-type': 'application/json; charset=utf-8' });
+      }
+      response = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'authorization': 'Bearer ' + apiKey,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts',
+          voice: process.env.OPENAI_TTS_VOICE || 'cedar',
+          input: text,
+          instructions: process.env.OPENAI_TTS_INSTRUCTIONS || '落ち着いた男性の日本語スポーツ実況アナウンサーとして、会話のように自然で滑らかに読んでください。短い速報文でも機械的に区切らず、聞き取りやすいテンポで、明るさと臨場感を少し加えてください。',
+          response_format: 'mp3'
+        })
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
-      return send(res, response.status, JSON.stringify({ error: 'OpenAI TTS failed', detail: errorText }), { 'content-type': 'application/json; charset=utf-8' });
+      return send(res, response.status, JSON.stringify({ error: provider + ' TTS failed', detail: errorText }), { 'content-type': 'application/json; charset=utf-8' });
     }
 
     const audio = Buffer.from(await response.arrayBuffer());
@@ -491,6 +519,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 

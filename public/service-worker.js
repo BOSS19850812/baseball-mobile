@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v68-outfield-error-advance";
+﻿const CACHE_NAME = "baseball-mobile-v70-elevenlabs-tts";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -32,6 +32,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 
