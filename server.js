@@ -479,6 +479,18 @@ async function handleTts(req, res) {
   }
 }
 
+function ttsStatus() {
+  const provider = String(process.env.TTS_PROVIDER || 'openai').toLowerCase();
+  const ready = provider === 'elevenlabs'
+    ? !!(process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID)
+    : !!process.env.OPENAI_API_KEY;
+  return {
+    provider,
+    ready,
+    label: provider === 'elevenlabs' ? 'ElevenLabs TTS' : 'サーバーTTS'
+  };
+}
+
 function serveStatic(req, res) {
   let urlPath;
   try { urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
@@ -504,10 +516,11 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v53-bases-voice', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v71-elevenlabs-auto', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return handleStripeWebhook(req, res);
     if (pathname.startsWith('/api/billing/')) return handleBilling(req, res, pathname);
+    if (pathname === '/api/tts/status') return json(res, 200, ttsStatus());
     if (pathname === '/api/tts') return handleTts(req, res);
     serveStatic(req, res);
   } catch (error) {
@@ -519,6 +532,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 

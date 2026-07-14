@@ -145,6 +145,7 @@ const Commentary=(()=>{
   let history=[];
   const commentaryQueue=[];
   let audioPlaying=false;
+  let serverTtsStatus={provider:'',ready:false,label:'サーバーTTS'};
   function load(){try{settings={...settings,...JSON.parse(localStorage.getItem(LS)||'{}')}}catch(e){}try{history=JSON.parse(localStorage.getItem(HLS)||'[]')}catch(e){history=[]}}
   function saveSettings(){localStorage.setItem(LS,JSON.stringify(settings))}
   function saveHistory(){localStorage.setItem(HLS,JSON.stringify(history.slice(-100)))}
@@ -318,11 +319,23 @@ const Commentary=(()=>{
       if(url)URL.revokeObjectURL(url);
     }
   }
+  async function syncServerTts(){
+    try{
+      const res=await fetch('/api/tts/status',{cache:'no-store'});
+      if(!res.ok)return;
+      serverTtsStatus=await res.json();
+      if(serverTtsStatus.ready&&serverTtsStatus.provider==='elevenlabs'){
+        settings.engine='openai';
+        saveSettings();
+      }
+      updateUi();
+    }catch(e){}
+  }
   function updateUi(){
     const b=document.getElementById('voiceToggleBtn');if(b){b.textContent=settings.voiceEnabled?'音声ON':'音声OFF';b.className=settings.voiceEnabled?'commentary-toggle-on':'commentary-toggle-off'}
     const r=document.getElementById('voiceRateRange');if(r)r.value=settings.voiceRate;
     const l=document.getElementById('voiceRateLabel');if(l)l.textContent=Number(settings.voiceRate).toFixed(1);
-    const e=document.getElementById('voiceEngineSelect');if(e)e.value=settings.engine;
+    const e=document.getElementById('voiceEngineSelect');if(e){const opt=e.querySelector('option[value="openai"]');if(opt)opt.textContent=serverTtsStatus.label||'サーバーTTS';e.value=settings.engine;}
     const lb=document.getElementById('ttsToggleBtn');if(lb){lb.textContent=settings.voiceEnabled?'実況音声 ON':'実況音声 OFF';lb.className='commentary-live-toggle '+(settings.voiceEnabled?'commentary-toggle-on':'commentary-toggle-off')}
     renderHistory();
   }
@@ -330,7 +343,7 @@ const Commentary=(()=>{
   function setRate(v){settings.voiceRate=Math.max(.8,Math.min(1.5,Number(v)||1));saveSettings();updateUi()}
   function setEngine(v){settings.engine=v==='openai'?'openai':'browser';saveSettings();updateUi()}
   function test(){settings.voiceEnabled=true;saveSettings();updateUi();stopCurrentSpeech();add('1番 山田 センター前ヒット')}
-  function init(){load();updateUi()}
+  function init(){load();updateUi();syncServerTts()}
   return{init,add,speak,record,renderHistory,toggleVoice,setRate,setEngine,test,settings,commentaryQueue,makeCommentary};
 })();
 function isTtsEnabled(){return Commentary.settings.voiceEnabled}
@@ -481,7 +494,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v70-elevenlabs-tts';
+const APP_BUILD='v71-elevenlabs-auto';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -501,6 +514,7 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
 
 
 
