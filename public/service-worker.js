@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v72-elevenlabs-no-fallback";
+﻿const CACHE_NAME = "baseball-mobile-v73-force-elevenlabs-tts";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -32,6 +32,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 
