@@ -275,6 +275,40 @@ const Commentary=(()=>{
       .replace(/いちるい・さんるい/g,'いちるい、さんるい')
       .replace(/にるい・さんるい/g,'にるい、さんるい')
       .replace(/打点/g,'だてん')
+      .replace(/だてん1/g,'だてんいち')
+      .replace(/だてん2/g,'だてんに')
+      .replace(/だてん3/g,'だてんさん')
+      .replace(/だてん4/g,'だてんよん')
+      .replace(/1得点/g,'いってん')
+      .replace(/2得点/g,'にてん')
+      .replace(/3得点/g,'さんてん')
+      .replace(/4得点/g,'よんてん')
+      .replace(/センター前/g,'センターまえ')
+      .replace(/レフト前/g,'レフトまえ')
+      .replace(/ライト前/g,'ライトまえ')
+      .replace(/見逃し三振/g,'みのがしさんしん')
+      .replace(/空振り三振/g,'からぶりさんしん')
+      .replace(/ファウルチップ三振/g,'ファウルチップさんしん')
+      .replace(/ファールチップ三振/g,'ファウルチップさんしん')
+      .replace(/三振/g,'さんしん')
+      .replace(/四球/g,'フォアボール')
+      .replace(/死球/g,'デッドボール')
+      .replace(/牽制/g,'けんせい')
+      .replace(/暴投/g,'ぼうとう')
+      .replace(/捕逸/g,'ほいつ')
+      .replace(/悪送球/g,'あくそうきゅう')
+      .replace(/送球/g,'そうきゅう')
+      .replace(/失策/g,'エラー')
+      .replace(/併殺/g,'ダブルプレイ')
+      .replace(/犠牲フライ/g,'ぎせいフライ')
+      .replace(/犠飛/g,'ぎせいフライ')
+      .replace(/本塁/g,'ホーム')
+      .replace(/生還/g,'せいかん')
+      .replace(/得点/g,'とくてん')
+      .replace(/内野安打/g,'ないやあんだ')
+      .replace(/安打/g,'ヒット')
+      .replace(/打者走者/g,'バッターランナー')
+      .replace(/走者/g,'ランナー')
       .replace(/ランナーランナーなし/g,'ランナーなし')
       .replace(/HR/g,'ホームラン')
       .replace(/DP/g,'ダブルプレイ')
@@ -515,7 +549,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v79-native-ja-tts';
+const APP_BUILD='v81-speech-literal-reading';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -535,6 +569,8 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
+
 
 
 
