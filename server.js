@@ -435,10 +435,11 @@ async function handleTts(req, res) {
         body: JSON.stringify({
           text,
           model_id: process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2',
+          language_code: process.env.ELEVENLABS_LANGUAGE_CODE || 'ja',
           voice_settings: {
-            stability: Number(process.env.ELEVENLABS_STABILITY || 0.45),
-            similarity_boost: Number(process.env.ELEVENLABS_SIMILARITY_BOOST || 0.85),
-            style: Number(process.env.ELEVENLABS_STYLE || 0.25),
+            stability: Number(process.env.ELEVENLABS_STABILITY || 0.78),
+            similarity_boost: Number(process.env.ELEVENLABS_SIMILARITY_BOOST || 0.92),
+            style: Number(process.env.ELEVENLABS_STYLE || 0.04),
             use_speaker_boost: true
           }
         })
@@ -532,6 +533,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 
