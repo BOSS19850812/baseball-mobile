@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v75-direct-audio-tts";
+﻿const CACHE_NAME = "baseball-mobile-v78-rbi-out-pronunciation";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -32,25 +32,5 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

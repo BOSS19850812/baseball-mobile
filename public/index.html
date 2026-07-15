@@ -248,13 +248,38 @@ const Commentary=(()=>{
     return String(text||'')
       .replace(/(\d+番)\s+([^\s]+)\s+(.+?)\s+(\d+アウト)\s+(.+)$/,'$1、$2。$3。$4、ランナー$5。')
       .replace(/0アウト/g,'ノーアウト')
-      .replace(/1(ボール|ストライク|アウト)/g,'ワン$1')
-      .replace(/2(ボール|ストライク|アウト)/g,'ツー$1')
-      .replace(/3(ボール|ストライク|アウト)/g,'スリー$1')
+      .replace(/1アウト/g,'わんなうと')
+      .replace(/2アウト/g,'ツーアウト')
+      .replace(/3アウト/g,'スリーアウト')
+      .replace(/1(ボール|ストライク)/g,'ワン$1')
+      .replace(/2(ボール|ストライク)/g,'ツー$1')
+      .replace(/3(ボール|ストライク)/g,'スリー$1')
+      .replace(/1番/g,'いちばん')
+      .replace(/2番/g,'にばん')
+      .replace(/3番/g,'さんばん')
+      .replace(/4番/g,'よばん')
+      .replace(/5番/g,'ごばん')
+      .replace(/6番/g,'ろくばん')
+      .replace(/7番/g,'ななばん')
+      .replace(/8番/g,'はちばん')
+      .replace(/9番/g,'きゅうばん')
+      .replace(/1塁・2塁・3塁/g,'まんるい')
+      .replace(/満塁/g,'まんるい')
+      .replace(/1塁/g,'いちるい')
+      .replace(/2塁/g,'にるい')
+      .replace(/3塁/g,'さんるい')
+      .replace(/一塁/g,'いちるい')
+      .replace(/二塁/g,'にるい')
+      .replace(/三塁/g,'さんるい')
+      .replace(/いちるい・にるい/g,'いちるい、にるい')
+      .replace(/いちるい・さんるい/g,'いちるい、さんるい')
+      .replace(/にるい・さんるい/g,'にるい、さんるい')
+      .replace(/打点/g,'だてん')
       .replace(/ランナーランナーなし/g,'ランナーなし')
-      .replace(/([123])塁・([123])塁・([123])塁/g,'満塁')
-      .replace(/([123])塁・([123])塁/g,'$1塁$2塁')
-      .replace(/ランナー(\d塁)/g,'ランナー$1')
+      .replace(/HR/g,'ホームラン')
+      .replace(/DP/g,'ダブルプレイ')
+      .replace(/FC/g,'フィルダースチョイス')
+      .replace(/・/g,'、')
       .replace(/\s+/g,' ')
       .trim();
   }
@@ -490,7 +515,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v75-direct-audio-tts';
+const APP_BUILD='v78-rbi-out-pronunciation';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -510,35 +535,5 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
