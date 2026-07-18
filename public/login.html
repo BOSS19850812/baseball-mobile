@@ -69,8 +69,8 @@
         <div class="start-steps"><div class="start-step"><b>新規登録の流れ</b> ログインID・パスワード発行 → 課金方法の選択 → アプリ利用開始</div></div>
         <label for="regLoginId">新規登録 ログインID</label>
         <input id="regLoginId" type="text" inputmode="text" autocomplete="username" placeholder="例: team-osaka">
-        <label for="regPassword">新規登録 パスワード</label>
-        <input id="regPassword" type="password" autocomplete="new-password" placeholder="4文字以上">
+        <label for="regPassword">新規登録 パスワード（英数混合9文字以上）</label>
+        <input id="regPassword" type="password" autocomplete="new-password" placeholder="英字と数字を含む9文字以上">
         <button class="primary" type="button" onclick="register()">新規登録して課金方法を選ぶ</button>
         <div class="note">登録後、決済画面へ進みます。Stripe未設定の時は課金案内だけ表示されます。</div>
       </div>
@@ -105,7 +105,7 @@
     <div class="foot">APIキーは画面には保存されません。音声実況はサーバー経由で安全に使います。</div>
   </main>
   <script>
-    const APP_BUILD='v89-hide-paid-checkout';
+    const APP_BUILD='v90-password-policy';
     const $=id=>document.getElementById(id);
     function setStatus(text){$('status').textContent=text||''}
     function appUrl(){return './?v='+encodeURIComponent(APP_BUILD)}
@@ -146,7 +146,8 @@
       const loginId=$('regLoginId').value.trim();
       const password=$('regPassword').value;
       if(!loginId){setStatus('新規登録のログインIDを入力してください');$('regLoginId').focus();return}
-      if(!password){setStatus('新規登録のパスワードを入力してください');$('regPassword').focus();return}
+      if(!password){setStatus('新規登録のパスワードを入力してください');regPassword.focus();return}
+      if(!/^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{9,}$/.test(password)){setStatus('パスワードは英字と数字を両方含む9文字以上で入力してください');regPassword.focus();return}
       try{
         setStatus('ログインIDを発行中...');
         const data=await api('/api/auth/register',{method:'POST',body:JSON.stringify({loginId,password})});
@@ -169,6 +170,9 @@
   </script>
 </body>
 </html>
+
+
+
 
 
 

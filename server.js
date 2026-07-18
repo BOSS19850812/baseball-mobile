@@ -294,7 +294,7 @@ async function handleAuth(req, res, pathname) {
     const loginId = String(data.loginId || data.email || '').trim().toLowerCase();
     const password = String(data.password || '');
     if (!/^[a-z0-9._-]{3,40}$/.test(loginId) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId)) return json(res, 400, { error: 'ログインIDは3文字以上で入力してください' });
-    if (password.length < 4) return json(res, 400, { error: 'パスワードは4文字以上で入力してください' });
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{9,}$/.test(password)) return json(res, 400, { error: 'パスワードは英字と数字を両方含む9文字以上で入力してください' });
     const db = loadUsers();
     if (db.users.find(u => (u.loginId || u.email) === loginId)) return json(res, 409, { error: 'このログインIDは登録済みです。ログインしてください' });
     const email = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId) ? loginId : loginId + '@team.local';
@@ -541,7 +541,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v71-elevenlabs-auto', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v90-password-policy', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return handleStripeWebhook(req, res);
     if (pathname.startsWith('/api/billing/')) return handleBilling(req, res, pathname);
@@ -557,6 +557,8 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
+
 
 
 
