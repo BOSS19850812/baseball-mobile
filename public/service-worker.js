@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v85-play-order-display-fix";
+﻿const CACHE_NAME = "baseball-mobile-v86-paid-only";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -32,6 +32,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 

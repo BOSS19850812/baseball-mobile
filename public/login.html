@@ -62,19 +62,18 @@
     <section class="card">
       <div class="head">ログイン</div>
       <div class="body">
-        <div class="start-steps"><div class="start-step"><b>1.</b> 無料で試す、またはログイン</div><div class="start-step"><b>2.</b> 入力タブでチーム名と選手名を登録</div><div class="start-step"><b>3.</b> 速報タブで試合を記録</div></div>
+        <div class="start-steps"><div class="start-step"><b>1.</b> ログインIDとパスワードでログイン</div><div class="start-step"><b>2.</b> 有料プラン登録</div><div class="start-step"><b>3.</b> 速報タブで試合を記録</div></div>
         <label for="loginId">ログインID</label>
         <input id="loginId" type="text" inputmode="text" autocomplete="username" placeholder="team-id または mail@example.com">
         <label for="password">パスワード</label>
         <input id="password" type="password" autocomplete="current-password" placeholder="パスワード">
         <button class="primary" type="button" onclick="login()">ログイン</button>
         <div class="row">
-          <button class="secondary" type="button" onclick="guest()">無料で試す</button>
           <button class="secondary" type="button" onclick="goApp()">アプリへ戻る</button>
         </div>
         <button class="secondary" type="button" onclick="toggleGuide()">使い方の説明</button>
-        <div class="note">有料プラン登録や契約管理は、ログイン後にアプリ内から進められます。</div>
-        <div class="cover-note">無料お試しはこの端末で1回のみです。</div>
+        <div class="note">利用には有料プラン登録が必要です。契約管理はログイン後にアプリ内から進められます。</div>
+        <div class="cover-note">無料ユーザー利用はありません。</div>
         <div id="status" class="status"></div>
       </div>
       <div id="guideBox" class="guide">
@@ -85,7 +84,7 @@
           <li><b>3. 操作</b> でボール、ストライク、試合操作、実況音声を使います。</li>
           <li><b>4. 成績</b> で成績確認、手動入力、バックアップ保存ができます。</li>
         </ul>
-        <div class="trial-note">無料お試しはこの端末で1回のみです。続けて使う場合はログインしてください。</div>
+        <div class="trial-note">利用にはログインと有料プラン登録が必要です。</div>
       </div>
     </section>
     <div class="foot">APIキーは画面には保存されません。音声実況はサーバー経由で安全に使います。</div>
@@ -99,12 +98,6 @@
     function toggleGuide(){
       const box=$('guideBox');
       box.classList.toggle('show');
-    }
-    function guest(){
-      localStorage.setItem('bb_free_trial_used','1');
-      localStorage.setItem('bb_guest_login','1');
-      setStatus('無料お試しで開きます');
-      goApp();
     }
     async function api(path,options={}){
       const res=await fetch(path,{credentials:'same-origin',headers:{'content-type':'application/json',...(options.headers||{})},...options});
