@@ -38,6 +38,9 @@
     .row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
     .note{color:#bbb;font-size:12px;line-height:1.55;margin-top:12px}
     .status{min-height:20px;margin-top:10px;color:#f2b83a;font-size:12px;font-weight:900;line-height:1.5}
+    .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 12px}
+    .choice-card{background:#0b0b0b;border:1px solid #2c2c2c;border-radius:10px;padding:10px;color:#ddd;font-size:12px;line-height:1.45;font-weight:800}
+    .choice-card b{display:block;color:#f2b83a;font-size:13px;margin-bottom:3px}
     .foot{text-align:center;color:#777;font-size:11px;margin-top:16px;line-height:1.5}
     .guide{display:none;padding:12px 14px;border-top:1px solid #222}
     .guide.show{display:block}
@@ -60,9 +63,21 @@
       <div class="feature-grid"><div class="feature">速報入力</div><div class="feature">実況音声</div><div class="feature">成績管理</div></div>
     </section>
     <section class="card">
-      <div class="head">ログイン</div>
+      <div class="head">はじめる</div>
       <div class="body">
-        <div class="start-steps"><div class="start-step"><b>1.</b> ログインIDとパスワードでログイン</div><div class="start-step"><b>2.</b> 有料プラン登録</div><div class="start-step"><b>3.</b> 速報タブで試合を記録</div></div>
+        <div class="choice-grid"><div class="choice-card"><b>初めて利用する</b>新規登録でログインIDとパスワードを発行し、課金方法を選びます。</div><div class="choice-card"><b>登録済</b>発行済みのログインIDとパスワードでログインします。</div></div>
+        <div class="start-steps"><div class="start-step"><b>新規登録の流れ</b> ログインID・パスワード発行 → 課金方法の選択 → アプリ利用開始</div></div>
+        <label for="regLoginId">新規登録 ログインID</label>
+        <input id="regLoginId" type="text" inputmode="text" autocomplete="username" placeholder="例: team-osaka">
+        <label for="regPassword">新規登録 パスワード</label>
+        <input id="regPassword" type="password" autocomplete="new-password" placeholder="4文字以上">
+        <button class="primary" type="button" onclick="register()">新規登録して課金方法を選ぶ</button>
+        <div class="note">登録後、決済画面へ進みます。Stripe未設定の時は課金案内だけ表示されます。</div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="head">登録済の方 ログイン</div>
+      <div class="body">
         <label for="loginId">ログインID</label>
         <input id="loginId" type="text" inputmode="text" autocomplete="username" placeholder="team-id または mail@example.com">
         <label for="password">パスワード</label>
@@ -72,7 +87,7 @@
           <button class="secondary" type="button" onclick="goApp()">アプリへ戻る</button>
         </div>
         <button class="secondary" type="button" onclick="toggleGuide()">使い方の説明</button>
-        <div class="note">利用には有料プラン登録が必要です。契約管理はログイン後にアプリ内から進められます。</div>
+        <div class="note">登録済みの方はこちらからログインしてください。</div>
         <div class="cover-note">無料ユーザー利用はありません。</div>
         <div id="status" class="status"></div>
       </div>
@@ -90,7 +105,7 @@
     <div class="foot">APIキーは画面には保存されません。音声実況はサーバー経由で安全に使います。</div>
   </main>
   <script>
-    const APP_BUILD='v57-login-id-password';
+    const APP_BUILD='v87-register-login-flow';
     const $=id=>document.getElementById(id);
     function setStatus(text){$('status').textContent=text||''}
     function appUrl(){return './?v='+encodeURIComponent(APP_BUILD)}
@@ -127,8 +142,29 @@
         if(data.user)goApp();
       }catch(e){}
     }
+    async function register(){
+      const loginId=$('regLoginId').value.trim();
+      const password=$('regPassword').value;
+      if(!loginId){setStatus('新規登録のログインIDを入力してください');$('regLoginId').focus();return}
+      if(!password){setStatus('新規登録のパスワードを入力してください');$('regPassword').focus();return}
+      try{
+        setStatus('ログインIDを発行中...');
+        const data=await api('/api/auth/register',{method:'POST',body:JSON.stringify({loginId,password})});
+        if(data.user&&data.user.id)localStorage.setItem('bb_current_user_id',data.user.id);
+        localStorage.removeItem('bb_guest_login');
+        setStatus('登録しました。課金方法へ進みます...');
+        const checkout=await api('/api/billing/checkout',{method:'POST'});
+        if(checkout.url){location.href=checkout.url;return}
+        setStatus(checkout.message||'登録完了。アプリ内の有料プランへ進んでください');
+        setTimeout(goApp,1200);
+      }catch(e){
+        setStatus(e.message||'新規登録できませんでした');
+      }
+    }
     $('loginId').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
     $('password').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+    $('regLoginId').addEventListener('keydown',e=>{if(e.key==='Enter')register()});
+    $('regPassword').addEventListener('keydown',e=>{if(e.key==='Enter')register()});
     check();
   </script>
 </body>

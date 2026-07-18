@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v86-paid-only";
+﻿const CACHE_NAME = "baseball-mobile-v87-register-login-flow";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",

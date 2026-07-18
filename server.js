@@ -288,6 +288,24 @@ async function handleAuth(req, res, pathname) {
     return json(res, 200, { user: publicUser(currentUser(req)), paid: isPaid(currentUser(req)) });
   }
 
+  if (pathname === '/api/auth/register') {
+    if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
+    const data = await readJson(req);
+    const loginId = String(data.loginId || data.email || '').trim().toLowerCase();
+    const password = String(data.password || '');
+    if (!/^[a-z0-9._-]{3,40}$/.test(loginId) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId)) return json(res, 400, { error: 'ログインIDは3文字以上で入力してください' });
+    if (password.length < 4) return json(res, 400, { error: 'パスワードは4文字以上で入力してください' });
+    const db = loadUsers();
+    if (db.users.find(u => (u.loginId || u.email) === loginId)) return json(res, 409, { error: 'このログインIDは登録済みです。ログインしてください' });
+    const email = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId) ? loginId : loginId + '@team.local';
+    const user = { id: crypto.randomUUID(), loginId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', createdAt: new Date().toISOString() };
+    db.users.push(user);
+    saveUsers(db);
+    const sid = crypto.randomBytes(32).toString('hex');
+    sessions.set(sid, user.id);
+    return json(res, 200, { user: publicUser(user), paid: false }, { 'set-cookie': 'bb_session=' + encodeURIComponent(sid) + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000' + secureCookieSuffix(req) });
+  }
+
   if (pathname === '/api/auth/login') {
     if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
     const data = await readJson(req);
@@ -298,10 +316,7 @@ async function handleAuth(req, res, pathname) {
     const db = loadUsers();
     let user = db.users.find(u => (u.loginId || u.email) === loginId);
     if (!user) {
-      const email = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId) ? loginId : loginId + '@team.local';
-      user = { id: crypto.randomUUID(), loginId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', createdAt: new Date().toISOString() };
-      db.users.push(user);
-      saveUsers(db);
+      return json(res, 401, { error: '登録がありません。初めて利用する場合は新規登録してください' });
     } else if (user.passwordHash) {
       if (!verifyPassword(password, user.passwordHash)) return json(res, 401, { error: 'ログインIDまたはパスワードが違います' });
     } else {
