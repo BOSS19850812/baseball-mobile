@@ -541,12 +541,12 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v90-password-policy', time: new Date().toISOString() });
-    if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return handleAuth(req, res, pathname);
-    if (pathname === '/api/stripe/webhook') return handleStripeWebhook(req, res);
-    if (pathname.startsWith('/api/billing/')) return handleBilling(req, res, pathname);
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v94-stripe-error-handling', time: new Date().toISOString() });
+    if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return await handleAuth(req, res, pathname);
+    if (pathname === '/api/stripe/webhook') return await handleStripeWebhook(req, res);
+    if (pathname.startsWith('/api/billing/')) return await handleBilling(req, res, pathname);
     if (pathname === '/api/tts/status') return json(res, 200, ttsStatus());
-    if (pathname === '/api/tts') return handleTts(req, res);
+    if (pathname === '/api/tts') return await handleTts(req, res);
     serveStatic(req, res);
   } catch (error) {
     json(res, 500, { error: error.message || 'server error' });
@@ -557,6 +557,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 
