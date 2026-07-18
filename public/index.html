@@ -286,6 +286,37 @@ const Commentary=(()=>{
       .replace(/センター前/g,'センターまえ')
       .replace(/レフト前/g,'レフトまえ')
       .replace(/ライト前/g,'ライトまえ')
+      .replace(/センター/g,'せんたー')
+      .replace(/レフト/g,'れふと')
+      .replace(/ライト/g,'らいと')
+      .replace(/ショート/g,'しょーと')
+      .replace(/サード/g,'さーど')
+      .replace(/セカンド/g,'せかんど')
+      .replace(/ファースト/g,'ふぁーすと')
+      .replace(/キャッチャー/g,'きゃっちゃー')
+      .replace(/ピッチャー/g,'ぴっちゃー')
+      .replace(/ヒット/g,'ひっと')
+      .replace(/ホームラン/g,'ほーむらん')
+      .replace(/フライ/g,'ふらい')
+      .replace(/ライナー/g,'らいなー')
+      .replace(/ゴロ/g,'ごろ')
+      .replace(/アウト/g,'あうと')
+      .replace(/セーフ/g,'せーふ')
+      .replace(/ストライク/g,'すとらいく')
+      .replace(/ボール/g,'ぼーる')
+      .replace(/チェンジ/g,'ちぇんじ')
+      .replace(/ランナー/g,'らんなー')
+      .replace(/らんなーらんなーなし/g,'らんなーなし')
+      .replace(/ノーあうと/g,'ノーアウト')
+      .replace(/ツーあうと/g,'ツーアウト')
+      .replace(/スリーあうと/g,'スリーアウト')
+      .replace(/バント/g,'ばんと')
+      .replace(/スクイズ/g,'すくいず')
+      .replace(/タッチアップ/g,'たっちあっぷ')
+      .replace(/ダブルプレイ/g,'だぶるぷれー')
+      .replace(/ゲッツー/g,'げっつー')
+      .replace(/フォアボール/g,'ふぉあぼーる')
+      .replace(/デッドボール/g,'でっどぼーる')
       .replace(/見逃し三振/g,'みのがしさんしん')
       .replace(/空振り三振/g,'からぶりさんしん')
       .replace(/ファウルチップ三振/g,'ファウルチップさんしん')
@@ -293,9 +324,11 @@ const Commentary=(()=>{
       .replace(/三振/g,'さんしん')
       .replace(/四球/g,'フォアボール')
       .replace(/死球/g,'デッドボール')
+      .replace(/盗塁/g,'とうるい')
       .replace(/牽制/g,'けんせい')
       .replace(/暴投/g,'ぼうとう')
       .replace(/捕逸/g,'ほいつ')
+      .replace(/直撃/g,'ちょくげき')
       .replace(/悪送球/g,'あくそうきゅう')
       .replace(/送球/g,'そうきゅう')
       .replace(/失策/g,'エラー')
@@ -549,7 +582,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v81-speech-literal-reading';
+const APP_BUILD='v84-steal-direct-pronunciation';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -569,6 +602,9 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
+
+
 
 
 
