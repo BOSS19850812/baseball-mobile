@@ -117,10 +117,10 @@ const Account=(()=>{
   function statusText(){if(!state.user)return '未ログインです。ログインしてください';const badge=state.paid?'<span class="plan-badge pro">有料</span>':'<span class="plan-badge">未課金</span>';return badge+' '+(state.user.email||state.user.id)+' / '+(state.paid?'全機能が使えます':'利用には有料プラン登録が必要です')}
   function forceTop(){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.t==='top'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='top'))}
   function render(){document.body.classList.toggle('pay-locked',!!state.user&&!state.paid);if(state.user&&!state.paid)forceTop();const el=$('accountStatus');if(el)el.innerHTML=statusText();const email=$('accountEmail');if(email&&state.user)email.value=state.user.email}
-  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v57-login-id-password');return}render();verifyCheckout()}catch(e){location.replace('./login.html?v=v57-login-id-password');return}}
-  async function verifyCheckout(){const p=new URLSearchParams(location.search);if(p.get('checkout')!=='success'||!p.get('session_id')||!state.user)return;try{const data=await api('/api/billing/verify-session?session_id='+encodeURIComponent(p.get('session_id')),{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();history.replaceState(null,'',location.pathname+'?v=v57-login-id-password')}catch(e){console.warn(e)}}
-  async function login(){location.href='./login.html?v=v57-login-id-password'}
-  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v57-login-id-password'}catch(e){alert(e.message)}}
+  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v88-checkout-status-fix');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v88-checkout-status-fix');return}}
+  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v88-checkout-status-fix')}catch(e){console.warn(e)}}
+  async function login(){location.href='./login.html?v=v88-checkout-status-fix'}
+  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v88-checkout-status-fix'}catch(e){alert(e.message)}}
   async function startCheckout(){try{const data=await api('/api/billing/checkout',{method:'POST'});if(data.url){location.href=data.url;return}alert(data.message||'決済画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function openPortal(){try{const data=await api('/api/billing/portal',{method:'POST'});if(data.url){location.href=data.url;return}alert(data.message||'契約管理画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function demoActivate(){try{const data=await api('/api/billing/demo-activate',{method:'POST'});state.user=data.user;state.paid=!!data.paid;render();alert('テスト用に有料プランへ変更しました')}catch(e){alert(e.message)}}
@@ -584,7 +584,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v87-register-login-flow';
+const APP_BUILD='v88-checkout-status-fix';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -604,6 +604,7 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
 
 
 

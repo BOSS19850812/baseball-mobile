@@ -360,6 +360,10 @@ async function handleBilling(req, res, pathname) {
       'metadata[userId]': user.id,
       allow_promotion_codes: 'true'
     });
+    updateStoredUser(user.id, stored => {
+      stored.pendingStripeSessionId = session.id;
+      stored.updatedAt = new Date().toISOString();
+    });
     return json(res, 200, { mode: 'stripe', url: session.url, id: session.id });
   }
 
@@ -376,13 +380,17 @@ async function handleBilling(req, res, pathname) {
       customer: user.stripeCustomerId,
       return_url: base + '/?v=v41-billing-portal'
     });
+    updateStoredUser(user.id, stored => {
+      stored.pendingStripeSessionId = session.id;
+      stored.updatedAt = new Date().toISOString();
+    });
     return json(res, 200, { mode: 'stripe', url: session.url, id: session.id });
   }
 
   if (pathname === '/api/billing/verify-session') {
     if (req.method !== 'GET') return json(res, 405, { error: 'method not allowed' });
     const url = new URL(req.url, appBaseUrl(req));
-    const sessionId = String(url.searchParams.get('session_id') || '');
+    const sessionId = String(url.searchParams.get('session_id') || user.pendingStripeSessionId || '');
     if (!sessionId.startsWith('cs_')) return json(res, 400, { error: 'session_id is invalid' });
     const session = await stripeGet('/v1/checkout/sessions/' + encodeURIComponent(sessionId));
     if (session.client_reference_id !== user.id && session.metadata?.userId !== user.id) {
@@ -396,6 +404,7 @@ async function handleBilling(req, res, pathname) {
       stored.subscriptionStatus = 'active';
       stored.stripeCustomerId = session.customer || stored.stripeCustomerId || null;
       stored.stripeSubscriptionId = session.subscription || stored.stripeSubscriptionId || null;
+      stored.pendingStripeSessionId = null;
       stored.updatedAt = new Date().toISOString();
       saveUsers(db);
       return json(res, 200, { user: publicUser(stored), paid: true });
@@ -548,6 +557,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 
