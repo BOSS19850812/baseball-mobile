@@ -119,10 +119,10 @@ const Account=(()=>{
   function statusText(){if(!state.user)return '未ログインです。ログインしてください';const badge=state.paid?'<span class="plan-badge pro">有料</span>':'<span class="plan-badge">未課金</span>';return badge+' '+(state.user.email||state.user.id)+' / '+(state.paid?'全機能が使えます':'利用には有料プラン登録が必要です')}
   function forceTop(){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.t==='top'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='top'))}
   function render(){document.body.classList.toggle('pay-locked',!!state.user&&!state.paid);if(state.user&&!state.paid)forceTop();const el=$("accountStatus");if(el)el.innerHTML=statusText();const email=$("accountEmail");if(email&&state.user)email.value=state.user.email;const choices=$("billingPlanChoices");if(choices)choices.style.display=state.paid?'none':'grid';const note=$("billingPlanNote");if(note)note.style.display=state.paid?'none':'block';const share=$("viewerShareBox");if(share)share.style.display=state.paid?'block':'none';const url=$("viewerUrl");if(url&&lastViewerUrl)url.value=lastViewerUrl}
-  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v100-viewer-button-fix');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v100-viewer-button-fix');return}}
-  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v100-viewer-button-fix')}catch(e){console.warn(e)}}
-  async function login(){location.href='./login.html?v=v100-viewer-button-fix'}
-  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v100-viewer-button-fix'}catch(e){alert(e.message)}}
+  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v101-viewer-auto-sync-fix');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v101-viewer-auto-sync-fix');return}}
+  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v101-viewer-auto-sync-fix')}catch(e){console.warn(e)}}
+  async function login(){location.href='./login.html?v=v101-viewer-auto-sync-fix'}
+  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v101-viewer-auto-sync-fix'}catch(e){alert(e.message)}}
   async function startCheckout(plan='monthly'){try{const data=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan})});if(data.url){location.href=data.url;return}alert(data.message||'決済画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function openPortal(){try{const data=await api('/api/billing/portal',{method:'POST'});if(data.url){location.href=data.url;return}alert(data.message||'契約管理画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function demoActivate(){try{const data=await api('/api/billing/demo-activate',{method:'POST'});state.user=data.user;state.paid=!!data.paid;render();alert('テスト用に有料プランへ変更しました')}catch(e){alert(e.message)}}
@@ -135,7 +135,7 @@ const $=id=>document.getElementById(id),LS='bb_mobile_clean_v1',DEF=['投','捕'
 const bs=()=>({ab:0,h:0,d2:0,d3:0,hr:0,rbi:0,k:0,bb:0,hbp:0,sb:0,sac:0});
 const mk=()=>Array.from({length:25},(_,i)=>({pos:i<9?DEF[i]:'-',name:'',stat:bs()}));
 let st=load()||{home:'ホーム',away:'ビジター',sub:'携帯用 野球速報',hs:'',as:'',first:'away',inn:1,half:'表',b:0,s:0,o:0,score:{home:Array(9).fill(null),away:Array(9).fill(null)},total:{home:0,away:0},hits:{home:0,away:0},err:{home:0,away:0},r:{1:false,2:false,3:false},rp:{1:null,2:null,3:null},ord:{home:1,away:1},play:'プレーなし',ps:'守備位置をタップして入力',fl:'PLAY',hist:[],snap:[],players:{home:mk(),away:mk()},line:{home:[0,1,2,3,4,5,6,7,8],away:[0,1,2,3,4,5,6,7,8]}};
-function teamStorageKey(){let u=Account&&Account.state&&Account.state.user,uid=(u&&u.id)||localStorage.getItem('bb_current_user_id');return uid?LS+'_'+uid:LS}function load(){try{return JSON.parse(localStorage.getItem(teamStorageKey()))}catch(e){return null}}function save(){localStorage.setItem(teamStorageKey(),JSON.stringify({...st,snap:[]}));if(window.Account&&Account.scheduleViewerSync)Account.scheduleViewerSync()}
+function teamStorageKey(){let u=Account&&Account.state&&Account.state.user,uid=(u&&u.id)||localStorage.getItem('bb_current_user_id');return uid?LS+'_'+uid:LS}function load(){try{return JSON.parse(localStorage.getItem(teamStorageKey()))}catch(e){return null}}function save(){localStorage.setItem(teamStorageKey(),JSON.stringify({...st,snap:[]}));if(typeof Account!=='undefined'&&Account.scheduleViewerSync)Account.scheduleViewerSync()}
 function norm(){if(st.hs==null)st.hs='';if(st.as==null)st.as='';['home','away'].forEach(t=>{while(st.players[t].length<25)st.players[t].push({pos:'-',name:'',stat:bs()});st.players[t].forEach((p,i)=>{if(!p.stat)p.stat=bs();if(!p.pos)p.pos=i<9?DEF[i]:'-'})})}
 function side(){return st.first==='away'?(st.half==='表'?'away':'home'):(st.half==='表'?'home':'away')}function def(){return side()==='home'?'away':'home'}function innIndex(){return Math.min(8,st.inn-1)}function bi(){return st.line[side()][st.ord[side()]-1]}function name(t,i){return st.players[t][i].name||'選手'+(i+1)}function cb(){return st.ord[side()]+'番 '+name(side(),bi())}
 function snap(){let c=JSON.parse(JSON.stringify(st));c.snap=[];st.snap.push(c);if(st.snap.length>80)st.snap.shift()}function undo(){if(st.snap.length){let a=st.snap;st=a.pop();st.snap=a;render(true)}}function ss(a,b='',f='PLAY'){st.play=a;st.ps=b;st.fl=f;st.playOrd=st.ord[side()]}
@@ -589,7 +589,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v100-viewer-button-fix';
+const APP_BUILD='v101-viewer-auto-sync-fix';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -609,6 +609,7 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
 
 
 
