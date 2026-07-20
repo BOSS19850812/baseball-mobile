@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v97-three-stripe-plans";
+﻿const CACHE_NAME = "baseball-mobile-v98-plan-choices-in-app";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
