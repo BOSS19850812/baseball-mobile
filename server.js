@@ -345,26 +345,35 @@ async function handleBilling(req, res, pathname) {
 
   if (pathname === '/api/billing/checkout') {
     if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
-    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRICE_ID) {
-      return json(res, 200, { mode: 'demo', message: 'Stripe未設定です。STRIPE_SECRET_KEY と STRIPE_PRICE_ID を .env に入れると決済画面へ進めます。' });
+    const body = await readJson(req).catch(() => ({}));
+    const plan = ['monthly', 'yearly', 'lifetime'].includes(body.plan) ? body.plan : 'monthly';
+    const priceMap = {
+      monthly: process.env.STRIPE_MONTHLY_PRICE_ID || process.env.STRIPE_PRICE_ID,
+      yearly: process.env.STRIPE_YEARLY_PRICE_ID,
+      lifetime: process.env.STRIPE_LIFETIME_PRICE_ID
+    };
+    const priceId = priceMap[plan];
+    if (!process.env.STRIPE_SECRET_KEY || !priceId) {
+      return json(res, 200, { mode: 'demo', message: 'Stripe未設定です。選択したプランのPrice IDとSTRIPE_SECRET_KEYを環境変数に入れると決済画面へ進めます。' });
     }
     const base = appBaseUrl(req);
     const session = await stripeRequest('/v1/checkout/sessions', {
-      mode: 'subscription',
-      'line_items[0][price]': process.env.STRIPE_PRICE_ID,
+      mode: plan === 'lifetime' ? 'payment' : 'subscription',
+      'line_items[0][price]': priceId,
       'line_items[0][quantity]': '1',
       success_url: base + '/?checkout=success&session_id={CHECKOUT_SESSION_ID}',
       cancel_url: base + '/?checkout=cancel',
       client_reference_id: user.id,
       customer_email: user.email,
       'metadata[userId]': user.id,
+      'metadata[plan]': plan,
       allow_promotion_codes: 'true'
     });
     updateStoredUser(user.id, stored => {
       stored.pendingStripeSessionId = session.id;
       stored.updatedAt = new Date().toISOString();
     });
-    return json(res, 200, { mode: 'stripe', url: session.url, id: session.id });
+    return json(res, 200, { mode: 'stripe', url: session.url, id: session.id, plan });
   }
 
   if (pathname === '/api/billing/portal') {

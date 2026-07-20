@@ -272,9 +272,9 @@
     <div class="shell">
       <div class="section-head"><div class="kicker">Pricing</div><h2>チームに合った料金を選べます。</h2><p>大会プランは設けず、チーム利用に必要な3つの選択肢に絞りました。</p></div>
       <div class="pricing">
-        <article class="price-card"><div class="plan">月額プラン</div><div class="price">1,980円 <small>/ 月（税込）</small></div><div class="saving">まず始めたいチームに</div><ul><li>試合速報・実況</li><li>成績・試合履歴管理</li><li>チーム専用ログインID</li><li>クラウド保存</li></ul><button class="btn btn-ghost" onclick="openModal('signup')">月額で始める</button></article>
-        <article class="price-card recommended"><div class="ribbon">おすすめ</div><div class="plan">年間プラン</div><div class="price">20,000円 <small>/ 年（税込）</small></div><div class="saving">月額12か月より3,760円お得</div><ul><li>月額プランの全機能</li><li>年間成績をまとめて管理</li><li>支払いは年1回</li><li>長期利用におすすめ</li></ul><button class="btn btn-primary" onclick="openModal('signup')">年間で始める</button></article>
-        <article class="price-card"><div class="plan">買い切りプラン</div><div class="price">80,000円 <small>（税込）</small></div><div class="saving">毎月・毎年の支払い不要</div><ul><li>買い切り利用権</li><li>チーム専用ログインID</li><li>基本機能を継続利用</li><li>大型追加機能は別途の場合あり</li></ul><button class="btn btn-ghost" onclick="openModal('signup')">買い切りを選ぶ</button></article>
+        <article class="price-card"><div class="plan">月額プラン</div><div class="price">1,980円 <small>/ 月（税込）</small></div><div class="saving">まず始めたいチームに</div><ul><li>試合速報・実況</li><li>成績・試合履歴管理</li><li>チーム専用ログインID</li><li>クラウド保存</li></ul><button class="btn btn-ghost" onclick="openModal('signup','monthly')">月額で始める</button></article>
+        <article class="price-card recommended"><div class="ribbon">おすすめ</div><div class="plan">年間プラン</div><div class="price">20,000円 <small>/ 年（税込）</small></div><div class="saving">月額12か月より3,760円お得</div><ul><li>月額プランの全機能</li><li>年間成績をまとめて管理</li><li>支払いは年1回</li><li>長期利用におすすめ</li></ul><button class="btn btn-primary" onclick="openModal('signup','yearly')">年間で始める</button></article>
+        <article class="price-card"><div class="plan">買い切りプラン</div><div class="price">80,000円 <small>（税込）</small></div><div class="saving">毎月・毎年の支払い不要</div><ul><li>買い切り利用権</li><li>チーム専用ログインID</li><li>基本機能を継続利用</li><li>大型追加機能は別途の場合あり</li></ul><button class="btn btn-ghost" onclick="openModal('signup','lifetime')">買い切りを選ぶ</button></article>
       </div>
       <p class="fine">※実際の決済・利用期間・アップデート範囲・同時利用端末数は、本番公開時の利用規約および料金ページで確定してください。</p>
     </div>
@@ -309,27 +309,30 @@
       <div class="sub-link">初めての方は <button onclick="switchModal('signup')">新規登録へ</button></div>
     </div>
     <div id="signupView" style="display:none">
-      <div class="eyebrow">初めて利用する方</div><h3>チームを新規登録</h3><p>登録後に料金プランを選択します。登録だけで自動課金されることはありません。</p>
+      <div class="eyebrow">初めて利用する方</div><h3>チームを新規登録</h3><p>選択中: <b id="selectedPlanLabel">月額プラン</b>。登録後に選択した料金プランの決済画面へ進みます。</p>
       <div class="field"><label for="regLoginId">新規登録 ログインID</label><input id="regLoginId" type="text" autocomplete="username" placeholder="例：team-osaka または mail@example.com" /></div><div class="field"><label for="regPassword">新規登録 パスワード（英数混合9文字以上）</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="英字と数字を含む9文字以上" /></div><button class="btn btn-primary" onclick="register()">新規登録して課金方法を選ぶ</button>
       <div class="sub-link">登録済みの方は <button onclick="switchModal('login')">ログインへ</button></div>
     </div><div id="authStatus" class="sub-link" style="margin-top:14px;color:#f5c451;font-weight:900"></div></div></div><script>
-  const APP_BUILD='v96-premium-lp';
+  const APP_BUILD='v97-three-stripe-plans';
+  let selectedPlan='monthly';
   const modal=document.getElementById('modal');
   const $=id=>document.getElementById(id);
   function appUrl(){return './?v='+encodeURIComponent(APP_BUILD)}
+  function planName(){return selectedPlan==='yearly'?'年額プラン':selectedPlan==='lifetime'?'買い切りプラン':'月額プラン'}
+  function setPlan(plan){selectedPlan=['monthly','yearly','lifetime'].includes(plan)?plan:'monthly';const el=$('selectedPlanLabel');if(el)el.textContent=planName()}
   function goApp(){location.href=appUrl()}
   function setStatus(text){const el=$('authStatus');if(el)el.textContent=text||''}
-  function openModal(type){modal.classList.add('show');switchModal(type);document.body.style.overflow='hidden';setTimeout(()=>{const id=type==='signup'?'regLoginId':'loginId';const el=$(id);if(el)el.focus()},80)}
+  function openModal(type,plan){if(plan)setPlan(plan);modal.classList.add('show');switchModal(type);document.body.style.overflow='hidden';setTimeout(()=>{const id=type==='signup'?'regLoginId':'loginId';const el=$(id);if(el)el.focus()},80)}
   function closeModal(){modal.classList.remove('show');document.body.style.overflow=''}
   function switchModal(type){$('loginView').style.display=type==='login'?'block':'none';$('signupView').style.display=type==='signup'?'block':'none';setStatus('')}
   function scrollToInfo(){document.getElementById('info').scrollIntoView({behavior:'smooth'})}
   function openDetail(id){const d=document.getElementById(id);d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'})}
   async function api(path,options={}){const res=await fetch(path,{credentials:'same-origin',headers:{'content-type':'application/json',...(options.headers||{})},...options});const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(e){data={message:text}}if(!res.ok)throw new Error(data.message||'通信に失敗しました');return data}
   async function login(){const loginId=$('loginId').value.trim();const password=$('password').value;if(!loginId){setStatus('ログインIDを入力してください');$('loginId').focus();return}if(!password){setStatus('パスワードを入力してください');$('password').focus();return}try{setStatus('ログイン中...');await api('/api/auth/login',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'ログインできませんでした')}}
-  async function register(){const loginId=$('regLoginId').value.trim();const password=$('regPassword').value;if(!loginId){setStatus('新規登録のログインIDを入力してください');$('regLoginId').focus();return}if(!password){setStatus('新規登録のパスワードを入力してください');$('regPassword').focus();return}if(!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{9,}$/.test(password)){setStatus('パスワードは英字と数字を両方含む9文字以上で入力してください');$('regPassword').focus();return}try{setStatus('登録中...');await api('/api/auth/register',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');setStatus('登録完了。決済画面へ移動します...');const checkout=await api('/api/billing/checkout',{method:'POST'});if(checkout.url){location.href=checkout.url;return}setStatus(checkout.message||'登録完了。アプリ内の有料プランへ進んでください')}catch(e){setStatus(e.message||'登録できませんでした')}}
+  async function register(){const loginId=$('regLoginId').value.trim();const password=$('regPassword').value;if(!loginId){setStatus('新規登録のログインIDを入力してください');$('regLoginId').focus();return}if(!password){setStatus('新規登録のパスワードを入力してください');$('regPassword').focus();return}if(!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{9,}$/.test(password)){setStatus('パスワードは英字と数字を両方含む9文字以上で入力してください');$('regPassword').focus();return}try{setStatus('登録中...');await api('/api/auth/register',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');setStatus('登録完了。決済画面へ移動します...');const checkout=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan:selectedPlan})});if(checkout.url){location.href=checkout.url;return}setStatus(checkout.message||'登録完了。アプリ内の有料プランへ進んでください')}catch(e){setStatus(e.message||'登録できませんでした')}}
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
-  window.addEventListener('load',()=>{if(new URLSearchParams(location.search).get('signup')==='1')openModal('signup')});
+  window.addEventListener('load',()=>{setPlan('monthly');if(new URLSearchParams(location.search).get('signup')==='1')openModal('signup')});
 </script>
 </body>
 </html>
