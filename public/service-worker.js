@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v95-hide-paid-checkout-button";
+﻿const CACHE_NAME = "baseball-mobile-v96-premium-lp";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -32,6 +32,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 
