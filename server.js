@@ -10,6 +10,7 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const HOST = process.env.HOST || (IS_PRODUCTION ? '0.0.0.0' : '127.0.0.1');
 const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const VIEW_GAMES_FILE = path.join(DATA_DIR, 'view-games.json');
 const sessions = new Map();
 
 function loadEnv() {
@@ -40,6 +41,19 @@ function loadUsers() {
 
 function saveUsers(db) {
   fs.writeFileSync(USERS_FILE, JSON.stringify(db, null, 2), 'utf8');
+}
+
+function loadViewGames() {
+  try { return JSON.parse(fs.readFileSync(VIEW_GAMES_FILE, 'utf8')); }
+  catch { return { games: {} }; }
+}
+
+function saveViewGames(db) {
+  fs.writeFileSync(VIEW_GAMES_FILE, JSON.stringify(db, null, 2), 'utf8');
+}
+
+function makeViewerToken() {
+  return crypto.randomBytes(12).toString('base64url');
 }
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
@@ -525,6 +539,73 @@ function ttsStatus() {
   };
 }
 
+function viewerCookie(req, res) {
+  const cookies = parseCookies(req);
+  let id = cookies.bb_viewer_id;
+  if (!id || !/^[A-Za-z0-9_-]{12,80}$/.test(id)) {
+    id = crypto.randomBytes(12).toString('base64url');
+    res.setHeader('set-cookie', 'bb_viewer_id=' + encodeURIComponent(id) + '; Path=/; Max-Age=31536000; SameSite=Lax' + secureCookieSuffix(req));
+  }
+  return id;
+}
+
+function compactGameState(state) {
+  const copy = JSON.parse(JSON.stringify(state || {}));
+  copy.snap = [];
+  return copy;
+}
+
+async function handleViewGame(req, res, pathname) {
+  if (pathname === '/api/view-game/publish') {
+    if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
+    const user = currentUser(req);
+    if (!isPaid(user)) return json(res, 403, { error: '有料アカウントのみ閲覧URLを発行できます' });
+    const body = await readJson(req, 768 * 1024);
+    const state = compactGameState(body.state);
+    const usersDb = loadUsers();
+    const stored = usersDb.users.find(u => u.id === user.id);
+    if (!stored) return json(res, 401, { error: 'login required' });
+    if (!stored.viewerToken) {
+      stored.viewerToken = makeViewerToken();
+      saveUsers(usersDb);
+    }
+    const db = loadViewGames();
+    db.games[stored.viewerToken] = {
+      token: stored.viewerToken,
+      ownerId: user.id,
+      state,
+      limit: 20,
+      viewers: (db.games[stored.viewerToken] && db.games[stored.viewerToken].viewers) || {},
+      updatedAt: new Date().toISOString()
+    };
+    saveViewGames(db);
+    return json(res, 200, { ok: true, token: stored.viewerToken, url: appBaseUrl(req) + '/view.html?game=' + encodeURIComponent(stored.viewerToken), limit: 20 });
+  }
+
+  if (pathname === '/api/view-game') {
+    if (req.method !== 'GET') return json(res, 405, { error: 'method not allowed' });
+    const token = new URL(req.url, 'http://localhost').searchParams.get('token') || '';
+    const db = loadViewGames();
+    const game = db.games[token];
+    if (!game) return json(res, 404, { error: '閲覧URLが見つかりません' });
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    game.viewers = game.viewers || {};
+    Object.keys(game.viewers).forEach(id => { if (now - Number(game.viewers[id] || 0) > day) delete game.viewers[id]; });
+    const viewerId = viewerCookie(req, res);
+    const known = Object.prototype.hasOwnProperty.call(game.viewers, viewerId);
+    const count = Object.keys(game.viewers).length;
+    if (!known && count >= (game.limit || 20)) {
+      saveViewGames(db);
+      return json(res, 403, { error: '閲覧上限に達しています' });
+    }
+    game.viewers[viewerId] = now;
+    saveViewGames(db);
+    return json(res, 200, { ok: true, state: game.state, updatedAt: game.updatedAt, viewers: Object.keys(game.viewers).length, limit: game.limit || 20 });
+  }
+
+  return json(res, 404, { error: 'not found' });
+}
 function serveStatic(req, res) {
   let urlPath;
   try { urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
@@ -550,10 +631,11 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v94-stripe-error-handling', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v99-viewer-share-url', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return await handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return await handleStripeWebhook(req, res);
     if (pathname.startsWith('/api/billing/')) return await handleBilling(req, res, pathname);
+    if (pathname === '/api/view-game/publish' || pathname === '/api/view-game') return await handleViewGame(req, res, pathname);
     if (pathname === '/api/tts/status') return json(res, 200, ttsStatus());
     if (pathname === '/api/tts') return await handleTts(req, res);
     serveStatic(req, res);
@@ -566,6 +648,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 

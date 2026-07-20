@@ -1,8 +1,8 @@
-﻿const CACHE_NAME = "baseball-mobile-v98-plan-choices-in-app";
+﻿const CACHE_NAME = "baseball-mobile-v99-viewer-share-url";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
-  "./login.html",
+  "./login.html",`r`n  "./view.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
@@ -32,6 +32,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 
