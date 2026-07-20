@@ -366,7 +366,7 @@ async function handleDemoGame(req, res) {
   if (!stored) return json(res, 404, { error: 'user not found' });
   const used = Number(stored.demoGamesUsed || 0);
   if (used >= DEMO_GAME_LIMIT) {
-    return json(res, 402, { error: '無料デモは2試合までです。有料プラン登録後に続けて利用できます。', demoRemaining: 0, user: publicUser(stored), paid: false });
+    return json(res, 402, { error: '無料お試しは2試合までです。有料プラン登録後に続けて利用できます。', demoRemaining: 0, user: publicUser(stored), paid: false });
   }
   stored.demoGamesUsed = used + 1;
   stored.updatedAt = new Date().toISOString();
@@ -651,7 +651,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v102-demo-two-games', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v103-trial-wording', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return await handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return await handleStripeWebhook(req, res);
     if (pathname === '/api/demo/new-game') return await handleDemoGame(req, res);
@@ -669,6 +669,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 
