@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v101-viewer-auto-sync-fix";
+﻿const CACHE_NAME = "baseball-mobile-v102-demo-two-games";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -32,6 +32,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 

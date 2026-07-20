@@ -11,6 +11,7 @@ const HOST = process.env.HOST || (IS_PRODUCTION ? '0.0.0.0' : '127.0.0.1');
 const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const VIEW_GAMES_FILE = path.join(DATA_DIR, 'view-games.json');
+const DEMO_GAME_LIMIT = 2;
 const sessions = new Map();
 
 function loadEnv() {
@@ -75,7 +76,9 @@ function publicUser(user) {
     email: user.email || user.loginId,
     plan: user.plan || 'free',
     subscriptionStatus: user.subscriptionStatus || 'inactive',
-    subscriptionUntil: user.subscriptionUntil || null
+    subscriptionUntil: user.subscriptionUntil || null,
+    demoGamesUsed: Number(user.demoGamesUsed || 0),
+    demoGamesLimit: DEMO_GAME_LIMIT
   };
 }
 
@@ -312,7 +315,7 @@ async function handleAuth(req, res, pathname) {
     const db = loadUsers();
     if (db.users.find(u => (u.loginId || u.email) === loginId)) return json(res, 409, { error: 'このログインIDは登録済みです。ログインしてください' });
     const email = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId) ? loginId : loginId + '@team.local';
-    const user = { id: crypto.randomUUID(), loginId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', createdAt: new Date().toISOString() };
+    const user = { id: crypto.randomUUID(), loginId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', demoGamesUsed: 0, createdAt: new Date().toISOString() };
     db.users.push(user);
     saveUsers(db);
     const sid = crypto.randomBytes(32).toString('hex');
@@ -353,6 +356,23 @@ async function handleAuth(req, res, pathname) {
   return false;
 }
 
+async function handleDemoGame(req, res) {
+  if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
+  const user = currentUser(req);
+  if (!user) return json(res, 401, { error: 'login required' });
+  if (isPaid(user)) return json(res, 200, { ok: true, paid: true, user: publicUser(user), demoRemaining: null });
+  const db = loadUsers();
+  const stored = db.users.find(u => u.id === user.id);
+  if (!stored) return json(res, 404, { error: 'user not found' });
+  const used = Number(stored.demoGamesUsed || 0);
+  if (used >= DEMO_GAME_LIMIT) {
+    return json(res, 402, { error: '無料デモは2試合までです。有料プラン登録後に続けて利用できます。', demoRemaining: 0, user: publicUser(stored), paid: false });
+  }
+  stored.demoGamesUsed = used + 1;
+  stored.updatedAt = new Date().toISOString();
+  saveUsers(db);
+  return json(res, 200, { ok: true, paid: false, user: publicUser(stored), demoRemaining: Math.max(0, DEMO_GAME_LIMIT - stored.demoGamesUsed) });
+}
 async function handleBilling(req, res, pathname) {
   const user = currentUser(req);
   if (!user) return json(res, 401, { error: 'login required' });
@@ -631,9 +651,10 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v99-viewer-share-url', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v102-demo-two-games', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return await handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return await handleStripeWebhook(req, res);
+    if (pathname === '/api/demo/new-game') return await handleDemoGame(req, res);
     if (pathname.startsWith('/api/billing/')) return await handleBilling(req, res, pathname);
     if (pathname === '/api/view-game/publish' || pathname === '/api/view-game') return await handleViewGame(req, res, pathname);
     if (pathname === '/api/tts/status') return json(res, 200, ttsStatus());
@@ -648,6 +669,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 
