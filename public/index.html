@@ -119,10 +119,10 @@ const Account=(()=>{
   function demoRemaining(){if(!state.user)return 0;return Math.max(0,Number(state.user.demoGamesLimit||2)-Number(state.user.demoGamesUsed||0))}function canUseDemo(){return !!state.user&&!state.paid&&demoRemaining()>0}function statusText(){if(!state.user)return '未ログインです。ログインしてください';const badge=state.paid?'<span class="plan-badge pro">有料</span>':'<span class="plan-badge">お試し</span>';let msg=state.paid?'全機能が使えます':'お試し試合 残り'+demoRemaining()+'試合 / 2試合まで試せます';return badge+' '+(state.user.email||state.user.id)+' / '+msg}
   function forceTop(){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.t==='top'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='top'))}
   function render(){document.body.classList.toggle('pay-locked',!!state.user&&!state.paid&&!canUseDemo());if(state.user&&!state.paid&&!canUseDemo())forceTop();const el=$("accountStatus");if(el)el.innerHTML=statusText();const email=$("accountEmail");if(email&&state.user)email.value=state.user.email;const choices=$("billingPlanChoices");if(choices)choices.style.display=state.paid?'none':'grid';const note=$("billingPlanNote");if(note)note.style.display=state.paid?'none':'block';const share=$("viewerShareBox");if(share)share.style.display=state.paid?'block':'none';const url=$("viewerUrl");if(url&&lastViewerUrl)url.value=lastViewerUrl}
-  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v106-tts-stability-fix');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v106-tts-stability-fix');return}}
-  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v106-tts-stability-fix')}catch(e){console.warn(e)}}
-  async function login(){location.href='./login.html?v=v106-tts-stability-fix'}
-  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v106-tts-stability-fix'}catch(e){alert(e.message)}}
+  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v107-outfield-fly-dp-label');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v107-outfield-fly-dp-label');return}}
+  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v107-outfield-fly-dp-label')}catch(e){console.warn(e)}}
+  async function login(){location.href='./login.html?v=v107-outfield-fly-dp-label'}
+  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v107-outfield-fly-dp-label'}catch(e){alert(e.message)}}
   async function startDemoGame(){if(!state.user||state.paid)return true;try{const data=await api('/api/demo/new-game',{method:'POST'});state.user=data.user;state.paid=!!data.paid;render();return true}catch(e){alert(e.message);return false}}
   async function startCheckout(plan='monthly'){try{const data=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan})});if(data.url){location.href=data.url;return}alert(data.message||'決済画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function openPortal(){try{const data=await api('/api/billing/portal',{method:'POST'});if(data.url){location.href=data.url;return}alert(data.message||'契約管理画面はまだ未設定です')}catch(e){alert(e.message)}}
@@ -539,7 +539,7 @@ function applyInfieldRun(kind,key,label,mode){if(mode==='close'){closeSheets();r
   if(type==='out')items=[
     [n+'フライ',`out:${z}:${n}フライ`,'outc'],['浅い'+n+'フライ',`out:${z}:浅い${n}フライ`,'outc'],['深い'+n+'フライ',`out:${z}:深い${n}フライ`,'outc'],
     [n+'ライナー',`out:${z}:${n}ライナー`,'outc'],[n+'ゴロアウト',`out:${z}:${n}ゴロアウト`,'outc'],[n+'ファウルフライ',`out:${z}:${n}ファウルフライ`,'outc'],
-    ['1塁ランナー戻れずDP',`ofdp1:${z}:${n} 1塁ランナー戻れずダブルプレイ`,'outc'],['2塁ランナー戻れずDP',`ofdp2:${z}:${n} 2塁ランナー戻れずダブルプレイ`,'outc'],['3塁ランナー戻れずDP',`ofdp3:${z}:${n} 3塁ランナー戻れずダブルプレイ`,'outc'],
+    [n+'フライ1塁戻れずDP',`ofdp1:${z}:${n}フライ 1塁ランナー戻れずダブルプレイ`,'outc'],[n+'フライ2塁戻れずDP',`ofdp2:${z}:${n}フライ 2塁ランナー戻れずダブルプレイ`,'outc'],[n+'フライ3塁戻れずDP',`ofdp3:${z}:${n}フライ 3塁ランナー戻れずダブルプレイ`,'outc'],
     ['1塁ランナー二塁アウトDP',`ofdp1:${z}:${n} 1塁ランナー二塁アウトダブルプレイ`,'outc'],['2塁ランナー三塁アウトDP',`ofdp2:${z}:${n} 2塁ランナー三塁アウトダブルプレイ`,'outc'],['3塁ランナー本塁アウトDP',`ofdp3:${z}:${n} 3塁ランナー本塁アウトダブルプレイ`,'outc'],
     ['タッチアップ本塁アウト','ro:3','outc'],['タッチアップ三塁アウト','ro:2','outc'],['タッチアップ二塁アウト','ro:1','outc'],
     ['ダイビングキャッチ',`out:${z}:ダイビングキャッチ`,'outc'],['フェンス際キャッチ',`out:${z}:フェンス際キャッチ`,'outc'],['ジャンピングキャッチ',`out:${z}:ジャンピングキャッチ`,'outc']
@@ -596,7 +596,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v106-tts-stability-fix';
+const APP_BUILD='v107-outfield-fly-dp-label';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -616,6 +616,8 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
+
 
 
 

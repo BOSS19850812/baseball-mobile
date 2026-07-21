@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v106-tts-stability-fix";
+﻿const CACHE_NAME = "baseball-mobile-v107-outfield-fly-dp-label";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -33,6 +33,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 
