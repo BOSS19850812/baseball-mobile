@@ -153,6 +153,7 @@ const Commentary=(()=>{
   let history=[];
   const commentaryQueue=[];
   let audioPlaying=false;
+  let currentAudio=null;
   let serverTtsStatus={provider:'',ready:false,label:'サーバーTTS'};
   function load(){try{settings={...settings,...JSON.parse(localStorage.getItem(LS)||'{}')}}catch(e){}try{history=JSON.parse(localStorage.getItem(HLS)||'[]')}catch(e){history=[]}}
   function saveSettings(){localStorage.setItem(LS,JSON.stringify(settings))}
@@ -251,7 +252,7 @@ const Commentary=(()=>{
     box.innerHTML=history.slice().reverse().map(x=>'<div class="commentary-item"><span class="commentary-time">['+x.time+']</span>'+x.text+'</div>').join('');
   }
   function isCountCall(text){return text==='ボール'||text==='ストライク'||text==='アウト'}
-  function stopCurrentSpeech(){if('speechSynthesis' in window)speechSynthesis.cancel();commentaryQueue.length=0;audioPlaying=false}
+  function stopCurrentSpeech(clearQueue=false){if('speechSynthesis' in window)speechSynthesis.cancel();let audio=currentAudio||document.getElementById('serverTtsAudio');if(audio){audio.pause();audio.removeAttribute('src');audio.load()}if(clearQueue)commentaryQueue.length=0;audioPlaying=false}
   function speechText(text){
     return String(text||'')
       .replace(/(\d+番)\s+([^\s]+)\s+(.+?)\s+(\d+アウト)\s+(.+)$/,'$1、$2。$3。$4、ランナー$5。')
@@ -368,7 +369,6 @@ const Commentary=(()=>{
   function add(text){
     const line=record(text);
     if(settings.voiceEnabled&&line){
-      if(isCountCall(line))stopCurrentSpeech();
       commentaryQueue.push(line);
       processQueue();
     }
@@ -380,6 +380,7 @@ const Commentary=(()=>{
   }
   function playBrowser(text){
     if(!('speechSynthesis' in window)){audioPlaying=false;processQueue();return}
+    let audio=currentAudio||document.getElementById('serverTtsAudio');if(audio){audio.pause();audio.removeAttribute('src');audio.load();currentAudio=null}
     const u=new SpeechSynthesisUtterance(speechText(text));
     u.lang='ja-JP';u.rate=Number(settings.voiceRate)||1.1;u.pitch=.86;
     const voices=speechSynthesis.getVoices?speechSynthesis.getVoices():[];
@@ -403,13 +404,15 @@ const Commentary=(()=>{
         audio.style.display='none';
         document.body.appendChild(audio);
       }
+      if('speechSynthesis' in window)speechSynthesis.cancel();
       audio.pause();
+      currentAudio=audio;
       audio.src='/api/tts?text='+encodeURIComponent(speechText(text))+'&t='+Date.now();
       audio.preload='auto';
       audio.volume=1;
       window.__lastCommentaryAudio=audio;
       await audio.play();
-      await new Promise(resolve=>{audio.onended=resolve;audio.onerror=resolve});
+      await new Promise(resolve=>{audio.onended=()=>{currentAudio=null;resolve()};audio.onerror=()=>{currentAudio=null;resolve()}});
     }catch(e){
       console.warn('Audio playback failed',e);
       alert('ElevenLabs音声を再生できませんでした。もう一度テスト再生を押してください。理由: '+(e&&e.message?e.message:e));
@@ -610,6 +613,7 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
 
 
 
