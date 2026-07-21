@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v104-plan-button-color";
+﻿const CACHE_NAME = "baseball-mobile-v105-app-trial-button";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -32,6 +32,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 

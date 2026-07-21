@@ -323,6 +323,18 @@ async function handleAuth(req, res, pathname) {
     return json(res, 200, { user: publicUser(user), paid: false }, { 'set-cookie': 'bb_session=' + encodeURIComponent(sid) + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000' + secureCookieSuffix(req) });
   }
 
+  if (pathname === '/api/auth/trial') {
+    if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
+    const db = loadUsers();
+    const token = crypto.randomBytes(4).toString('hex');
+    const loginId = 'trial-' + token;
+    const user = { id: crypto.randomUUID(), loginId, email: loginId + '@trial.local', passwordHash: '', plan: 'free', subscriptionStatus: 'inactive', demoGamesUsed: 0, trial: true, createdAt: new Date().toISOString() };
+    db.users.push(user);
+    saveUsers(db);
+    const sid = crypto.randomBytes(32).toString('hex');
+    sessions.set(sid, user.id);
+    return json(res, 200, { user: publicUser(user), paid: false }, { 'set-cookie': 'bb_session=' + encodeURIComponent(sid) + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000' + secureCookieSuffix(req) });
+  }
   if (pathname === '/api/auth/login') {
     if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
     const data = await readJson(req);
@@ -651,7 +663,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v103-trial-wording', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v105-app-trial-button', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return await handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return await handleStripeWebhook(req, res);
     if (pathname === '/api/demo/new-game') return await handleDemoGame(req, res);
@@ -669,6 +681,8 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
+
 
 
 
