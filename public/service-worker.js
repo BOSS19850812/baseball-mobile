@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v113-hard-hit-pronunciation";
+﻿const CACHE_NAME = "baseball-mobile-v114-tts-excel-patterns";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
