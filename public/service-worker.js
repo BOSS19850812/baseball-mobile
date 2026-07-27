@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v114-tts-excel-patterns";
+const CACHE_NAME = "baseball-mobile-v115-player-ruby-reading";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
