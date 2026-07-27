@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v112-runner-touchup-buttons";
+﻿const CACHE_NAME = "baseball-mobile-v113-hard-hit-pronunciation";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -33,6 +33,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 
