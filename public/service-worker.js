@@ -1,4 +1,4 @@
-const CACHE_NAME = "baseball-mobile-v115-player-ruby-reading";
+const CACHE_NAME = "baseball-mobile-v116-catcher-front-pronunciation";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
