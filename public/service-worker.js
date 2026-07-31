@@ -1,4 +1,4 @@
-const CACHE_NAME = "baseball-mobile-v116-catcher-front-pronunciation";
+﻿const CACHE_NAME = "baseball-mobile-v117-account-section-simplify";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -33,6 +33,7 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
+
 
 
 
