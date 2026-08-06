@@ -258,9 +258,9 @@ const TTS_EXCEL_PATTERNS=[
   ["センターフライ 1塁ランナー戻れずダブルプレイ", "せんたーふらい いちるいらんなー戻れずだぶるぷれー"],
   ["ショートライナー飛び出しダブルプレイ", "しょーとらいなー飛び出しだぶるぷれー"],
   ["ファースト3-6-3ダブルプレイ", "ふぁーすとさん、ろく、さんだぶるぷれー"],
-  ["ショート6-4-3ダブルプレイ", "しょーと6-よん、さんだぶるぷれー"],
+  ["ショート6-4-3ダブルプレイ", "しょーとろく、よん、さんだぶるぷれー"],
   ["セカンド4-6-3ダブルプレイ", "せかんどよん、ろく、さんだぶるぷれー"],
-  ["サード5-4-3ダブルプレイ", "さーど5-よん、さんだぶるぷれー"],
+  ["サード5-4-3ダブルプレイ", "さーどご、よん、さんだぶるぷれー"],
   ["ショートライナーダブルプレイ", "しょーとらいなーだぶるぷれー"],
   ["ショートスクイズダブルプレイ", "しょーとすくいずだぶるぷれー"],
   ["投手1-6-3ダブルプレイ", "投手いち、ろく、さんだぶるぷれー"],
@@ -353,7 +353,7 @@ const TTS_EXCEL_PATTERNS=[
   ["ショートトンネル", "しょーとトンネル"],
   ["セカンドトンネル", "せかんどトンネル"],
   ["サードファンブル", "さーどファンブル"],
-  ["バント処理エラー", "ばんと処理エラー"],
+  ["バント処理エラー", "ばんとしょりエラー"],
   ["パスボール 1点", "パスぼーる 1点"],
   ["レフト前ヒット", "れふとまえひっと"],
   ["ライト前ヒット", "らいとまえひっと"],
@@ -439,6 +439,7 @@ const TTS_EXCEL_PATTERNS=[
   ["レフト後逸", "れふとこういつ"],
   ["ライト後逸", "らいとこういつ"],
   ["捕手悪送球", "捕手あくそうきゅう"],
+  ["捕手捕球エラー", "捕手ほきゅうエラー"],
   ["本塁悪送球", "ホームあくそうきゅう"],
   ["一塁悪送球", "いちるいあくそうきゅう"],
   ["二塁悪送球", "にるいあくそうきゅう"],
@@ -507,6 +508,8 @@ function applyTtsExcelPatterns(text){let out=String(text||'');TTS_EXCEL_PATTERNS
       .replace(/2得点/g,'にてん')
       .replace(/3得点/g,'さんてん')
       .replace(/4得点/g,'よんてん')
+      .replace(/左中間/g,'さちゅうかん')
+      .replace(/右中間/g,'うちゅうかん')
       .replace(/センター前/g,'センターまえ')
       .replace(/レフト前/g,'レフトまえ')
       .replace(/ライト前/g,'ライトまえ')
@@ -519,6 +522,12 @@ function applyTtsExcelPatterns(text){let out=String(text||'');TTS_EXCEL_PATTERNS
       .replace(/ファースト/g,'ふぁーすと')
       .replace(/キャッチャー/g,'きゃっちゃー')
       .replace(/ピッチャー/g,'ぴっちゃー')
+      .replace(/犠牲フライ/g,'ぎせいふらい')
+      .replace(/犠飛/g,'ぎせいふらい')
+      .replace(/強襲/g,'きょうしゅう')
+      .replace(/後逸/g,'こういつ')
+      .replace(/落球判定/g,'らっきゅうはんてい')
+      .replace(/処理/g,'しょり')
       .replace(/強襲ヒット/g,'きょうしゅうひっと')
       .replace(/ヒット/g,'ひっと')
       .replace(/ホームラン/g,'ほーむらん')
@@ -548,7 +557,7 @@ function applyTtsExcelPatterns(text){let out=String(text||'');TTS_EXCEL_PATTERNS
       .replace(/ファールチップ三振/g,'ファウルチップさんしん')
       .replace(/三振/g,'さんしん')
       .replace(/四球/g,'しきゅう')
-      .replace(/死球/g,'しきゅう')
+      .replace(/死球/g,'デッドボール')
       .replace(/盗塁/g,'とうるい')
       .replace(/牽制/g,'けんせい')
       .replace(/暴投/g,'ぼうとう')
@@ -558,8 +567,6 @@ function applyTtsExcelPatterns(text){let out=String(text||'');TTS_EXCEL_PATTERNS
       .replace(/送球/g,'そうきゅう')
       .replace(/失策/g,'エラー')
       .replace(/併殺/g,'ダブルプレイ')
-      .replace(/犠牲フライ/g,'ぎせいフライ')
-      .replace(/犠飛/g,'ぎせいフライ')
       .replace(/本塁/g,'ホーム')
       .replace(/生還/g,'せいかん')
       .replace(/得点/g,'とくてん')
@@ -571,6 +578,29 @@ function applyTtsExcelPatterns(text){let out=String(text||'');TTS_EXCEL_PATTERNS
       .replace(/HR/g,'ホームラン')
       .replace(/DP/g,'ダブルプレイ')
       .replace(/FC/g,'フィルダースチョイス')
+      .replace(/1-6-3/g,'いち、ろく、さん')
+      .replace(/1-4-3/g,'いち、よん、さん')
+      .replace(/1-2-3/g,'いち、に、さん')
+      .replace(/2-6-3/g,'に、ろく、さん')
+      .replace(/2-5-3/g,'に、ご、さん')
+      .replace(/3-6-3/g,'さん、ろく、さん')
+      .replace(/3-6-1/g,'さん、ろく、いち')
+      .replace(/3-2-3/g,'さん、に、さん')
+      .replace(/4-6-3/g,'よん、ろく、さん')
+      .replace(/4-2-3/g,'よん、に、さん')
+      .replace(/5-4-3/g,'ご、よん、さん')
+      .replace(/5-2-3/g,'ご、に、さん')
+      .replace(/6-4-3/g,'ろく、よん、さん')
+      .replace(/6-2-3/g,'ろく、に、さん')
+      .replace(/2-3/g,'に、さん')
+      .replace(/4-3/g,'よん、さん')
+      .replace(/5-3/g,'ご、さん')
+      .replace(/6-3/g,'ろく、さん')
+      .replace(/振り逃げ/g,'ふりにげ')
+      .replace(/守備妨害/g,'しゅびぼうがい')
+      .replace(/観客妨害/g,'かんきゃくぼうがい')
+      .replace(/挟殺/g,'きょうさつ')
+      .replace(/封殺/g,'ふうさつ')
       .replace(/・/g,'、')
       .replace(/\s+/g,' ')
       .trim();
@@ -608,7 +638,7 @@ function applyTtsExcelPatterns(text){let out=String(text||'');TTS_EXCEL_PATTERNS
     }
     if(jp)u.voice=jp;
     let done=false;
-    let fallbackTimer=setTimeout(()=>{if(done)return;done=true;audioPlaying=false;processQueue()},15000);
+    let fallbackTimer=setTimeout(()=>{if(done)return;done=true;try{speechSynthesis.cancel()}catch(e){}audioPlaying=false;processQueue()},15000);
     const finish=()=>{if(done)return;done=true;clearTimeout(fallbackTimer);audioPlaying=false;processQueue()};
     u.onend=finish;
     u.onerror=finish;
@@ -817,7 +847,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v118-actions-card-visibility';
+const APP_BUILD='v119-tts-full-reading-fix';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -837,6 +867,8 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
+
 
 
 
