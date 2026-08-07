@@ -606,12 +606,12 @@ async function handleViewGame(req, res, pathname) {
       token: stored.viewerToken,
       ownerId: user.id,
       state,
-      limit: 20,
+      limit: null,
       viewers: (db.games[stored.viewerToken] && db.games[stored.viewerToken].viewers) || {},
       updatedAt: new Date().toISOString()
     };
     saveViewGames(db);
-    return json(res, 200, { ok: true, token: stored.viewerToken, url: appBaseUrl(req) + '/view.html?game=' + encodeURIComponent(stored.viewerToken), limit: 20 });
+    return json(res, 200, { ok: true, token: stored.viewerToken, url: appBaseUrl(req) + '/view.html?game=' + encodeURIComponent(stored.viewerToken), limit: null });
   }
 
   if (pathname === '/api/view-game') {
@@ -625,15 +625,9 @@ async function handleViewGame(req, res, pathname) {
     game.viewers = game.viewers || {};
     Object.keys(game.viewers).forEach(id => { if (now - Number(game.viewers[id] || 0) > day) delete game.viewers[id]; });
     const viewerId = viewerCookie(req, res);
-    const known = Object.prototype.hasOwnProperty.call(game.viewers, viewerId);
-    const count = Object.keys(game.viewers).length;
-    if (!known && count >= (game.limit || 20)) {
-      saveViewGames(db);
-      return json(res, 403, { error: '閲覧上限に達しています' });
-    }
     game.viewers[viewerId] = now;
     saveViewGames(db);
-    return json(res, 200, { ok: true, state: game.state, updatedAt: game.updatedAt, viewers: Object.keys(game.viewers).length, limit: game.limit || 20 });
+    return json(res, 200, { ok: true, state: game.state, updatedAt: game.updatedAt, viewers: Object.keys(game.viewers).length, limit: null });
   }
 
   return json(res, 404, { error: 'not found' });
@@ -681,6 +675,8 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
+
 
 
 
