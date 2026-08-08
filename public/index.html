@@ -118,11 +118,32 @@ const Account=(()=>{
   async function api(path,options={}){const res=await fetch(path,{credentials:'same-origin',headers:{'content-type':'application/json',...(options.headers||{})},...options});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'通信エラー');return data}
   function demoRemaining(){if(!state.user)return 0;return Math.max(0,Number(state.user.demoGamesLimit||2)-Number(state.user.demoGamesUsed||0))}function canUseDemo(){return !!state.user&&!state.paid&&demoRemaining()>0}function statusText(){if(!state.user)return '未ログインです。ログインしてください';const badge=state.paid?'<span class="plan-badge pro">有料</span>':'<span class="plan-badge">お試し</span>';let msg=state.paid?'全機能が使えます':'お試し試合 残り'+demoRemaining()+'試合 / 2試合まで試せます';return badge+' '+(state.user.email||state.user.id)+' / '+msg}
   function forceTop(){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.t==='top'));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='top'))}
-  function render(){document.body.classList.toggle('pay-locked',!!state.user&&!state.paid&&!canUseDemo());if(state.user&&!state.paid&&!canUseDemo())forceTop();const el=$("accountStatus");if(el)el.innerHTML=statusText();const loginRow=$("accountLoginRow");if(loginRow)loginRow.style.display=state.user?'none':'grid';const email=$("accountEmail");if(email&&state.user)email.value=state.user.email;const choices=$("billingPlanChoices");if(choices)choices.style.display=state.user&&!state.paid?'grid':'none';const note=$("billingPlanNote");if(note)note.style.display=state.user&&!state.paid?'block':'none';const share=$("viewerShareBox");if(share)share.style.display=state.paid?'block':'none';const url=$("viewerUrl");if(url&&lastViewerUrl)url.value=lastViewerUrl;const actCard=$("accountActionsCard");if(actCard)actCard.style.display=(state.user&&state.user.email)?'block':'none'}
-  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v118-actions-card-visibility');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v118-actions-card-visibility');return}}
-  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v118-actions-card-visibility')}catch(e){console.warn(e)}}
-  async function login(){location.href='./login.html?v=v118-actions-card-visibility'}
-  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v118-actions-card-visibility'}catch(e){alert(e.message)}}
+  function render(){
+  document.body.classList.toggle('pay-locked',!!state.user&&!state.paid&&!canUseDemo());
+  if(state.user&&!state.paid&&!canUseDemo())forceTop();
+  const el=$("accountStatus");
+  if(el){
+    if(state.user&&!state.paid){
+      const remaining=demoRemaining();
+      el.innerHTML=remaining>0
+        ? `<div style="text-align:center"><div style="color:#f2b83a;font-weight:900;font-size:15px;margin-bottom:8px">お試し中 — 残り${remaining}試合</div><div style="color:#bbb;font-size:13px;line-height:1.6;margin-bottom:6px">お試し終了後も継続利用するには、<br>下記プランをお選びください。</div></div>`
+        : `<div style="text-align:center"><div style="color:#ff6b6b;font-weight:900;font-size:15px;margin-bottom:8px">お試し期間が終了しました</div><div style="color:#bbb;font-size:13px;line-height:1.6;margin-bottom:6px">引き続きご利用いただくには、<br>下記プランをお選びください。</div></div>`;
+    }else{
+      el.innerHTML=statusText();
+    }
+  }
+  const loginRow=$("accountLoginRow");if(loginRow)loginRow.style.display=state.user?'none':'grid';
+  const email=$("accountEmail");if(email&&state.user)email.value=state.user.email;
+  const choices=$("billingPlanChoices");if(choices)choices.style.display=state.user&&!state.paid?'grid':'none';
+  const note=$("billingPlanNote");if(note)note.style.display=state.user&&!state.paid?'block':'none';
+  const share=$("viewerShareBox");if(share)share.style.display=state.paid?'block':'none';
+  const url=$("viewerUrl");if(url&&lastViewerUrl)url.value=lastViewerUrl;
+  const actCard=$("accountActionsCard");if(actCard)actCard.style.display=(state.user&&state.user.email)?'block':'none';
+}
+  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v122-login-cleanup');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v122-login-cleanup');return}}
+  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v122-login-cleanup')}catch(e){console.warn(e)}}
+  async function login(){location.href='./login.html?v=v122-login-cleanup'}
+  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v122-login-cleanup'}catch(e){alert(e.message)}}
   async function startDemoGame(){if(!state.user||state.paid)return true;try{const data=await api('/api/demo/new-game',{method:'POST'});state.user=data.user;state.paid=!!data.paid;render();return true}catch(e){alert(e.message);return false}}
   async function startCheckout(plan='monthly'){try{const data=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan})});if(data.url){location.href=data.url;return}alert(data.message||'決済画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function openPortal(){try{const data=await api('/api/billing/portal',{method:'POST'});if(data.url){location.href=data.url;return}alert(data.message||'契約管理画面はまだ未設定です')}catch(e){alert(e.message)}}
@@ -847,7 +868,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v120-view-enhance';
+const APP_BUILD='v122-login-cleanup';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;
@@ -867,6 +888,7 @@ window.addEventListener('load',setupAutoUpdate);
 </script>
 </body>
 </html>
+
 
 
 
