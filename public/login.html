@@ -208,6 +208,7 @@
         <div class="hero-actions">
           <button class="btn btn-primary" onclick="openModal('login')">ログインして試合を始める</button>
           <button class="btn btn-ghost" onclick="openModal('signup')">初めて利用する</button>
+          <button class="btn btn-dark" onclick="startTrialDirect()">アプリ体験２試合</button>
         </div>
         <div class="micro">
           <span><b class="check">✓</b> 1チーム1契約</span>
@@ -292,7 +293,7 @@
   </section>
 
   <section class="cta">
-    <div class="shell"><div class="cta-card"><h2>試合の感動を、チーム全員で。</h2><p>入力はかんたん。速報はリアルタイム。成績は自動で蓄積。まずはログイン、または新規登録から始めてください。</p><div class="cta-actions"><button class="btn btn-primary" onclick="openModal('login')">ログインする</button><button class="btn btn-ghost" onclick="openModal('signup')">初めて利用する</button></div></div></div>
+    <div class="shell"><div class="cta-card"><h2>試合の感動を、チーム全員で。</h2><p>入力はかんたん。速報はリアルタイム。成績は自動で蓄積。まずはログイン、または新規登録から始めてください。</p><div class="cta-actions"><button class="btn btn-primary" onclick="openModal('login')">ログインする</button><button class="btn btn-ghost" onclick="openModal('signup')">初めて利用する</button><button class="btn btn-dark" onclick="startTrialDirect()">アプリ体験２試合</button></div></div></div>
   </section>
 </main>
 
@@ -329,6 +330,7 @@
   function openDetail(id){const d=document.getElementById(id);d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'})}
   async function api(path,options={}){const res=await fetch(path,{credentials:'same-origin',headers:{'content-type':'application/json',...(options.headers||{})},...options});const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(e){data={message:text}}if(!res.ok)throw new Error(data.message||'通信に失敗しました');return data}
   async function startTrial(){try{setStatus('お試しアカウントを準備中...');await api('/api/auth/trial',{method:'POST'});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'アプリ体験を開始できませんでした')}}
+  async function startTrialDirect(){try{await api('/api/auth/trial',{method:'POST'});localStorage.removeItem('bb_guest_login');goApp()}catch(e){alert(e.message||'アプリ体験を開始できませんでした')}}
   async function login(){const loginId=$('loginId').value.trim();const password=$('password').value;if(!loginId){setStatus('ログインIDを入力してください');$('loginId').focus();return}if(!password){setStatus('パスワードを入力してください');$('password').focus();return}try{setStatus('ログイン中...');await api('/api/auth/login',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'ログインできませんでした')}}
   async function register(){const loginId=$('regLoginId').value.trim();const password=$('regPassword').value;if(!loginId){setStatus('新規登録のログインIDを入力してください');$('regLoginId').focus();return}if(!password){setStatus('新規登録のパスワードを入力してください');$('regPassword').focus();return}if(!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{9,}$/.test(password)){setStatus('パスワードは英字と数字を両方含む9文字以上で入力してください');$('regPassword').focus();return}try{setStatus('登録中...');await api('/api/auth/register',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');setStatus('登録完了。決済画面へ移動します...');const checkout=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan:selectedPlan})});if(checkout.url){location.href=checkout.url;return}setStatus(checkout.message||'登録完了。アプリ内の有料プランへ進んでください')}catch(e){setStatus(e.message||'登録できませんでした')}}
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
@@ -337,6 +339,8 @@
 </script>
 </body>
 </html>
+
+
 
 
 
