@@ -33,6 +33,65 @@ function loadEnv() {
 }
 
 loadEnv();
+// --- メール送信（Resend） ---
+let resend = null;
+try {
+  const { Resend } = require('resend');
+  if (process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+} catch (e) {
+  console.log('Resend not available, email disabled');
+}
+
+const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+const APP_URL = (process.env.APP_URL || process.env.APP_BASE_URL || 'https://baseball-mobile.onrender.com').replace(/\/$/, '');
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+async function sendTeamInfoEmail(toEmail, teamId, teamPassword) {
+  if (!resend) {
+    console.log('Email skipped (no Resend configured):', toEmail);
+    return;
+  }
+  try {
+    const safeTeamId = escapeHtml(teamId);
+    const safePassword = escapeHtml(teamPassword);
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: toEmail,
+      subject: '【野球チーム速報】チーム登録完了 - ログイン情報',
+      html: `
+        <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:20px">
+          <h2 style="color:#333;border-bottom:3px solid #f2b83a;padding-bottom:10px">野球チーム速報</h2>
+          <p>チーム登録が完了しました。<br>以下の情報でログインできます。</p>
+          <div style="background:#f8f8f0;border:2px solid #f2b83a;border-radius:10px;padding:20px;margin:20px 0">
+            <div style="margin-bottom:12px">
+              <div style="color:#888;font-size:12px">チームID</div>
+              <div style="font-size:22px;font-weight:900;letter-spacing:2px;color:#333">${safeTeamId}</div>
+            </div>
+            <div>
+              <div style="color:#888;font-size:12px">チームパスワード</div>
+              <div style="font-size:22px;font-weight:900;letter-spacing:1px;color:#333">${safePassword}</div>
+            </div>
+          </div>
+          <div style="background:#fff3cd;border-radius:8px;padding:14px;margin:16px 0">
+            <strong>大切に保管してください</strong><br>
+            <span style="font-size:13px">この情報はチームでログインする時に使います。チームメンバーにはこのメールを転送するか、LINEグループ等で共有してください。</span>
+          </div>
+          <p style="margin-top:20px"><a href="${APP_URL}/login.html" style="background:#f2b83a;color:#000;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">ログインする</a></p>
+          <hr style="border:none;border-top:1px solid #eee;margin:30px 0">
+          <p style="color:#999;font-size:11px">このメールは野球チーム速報の自動送信メールです。心当たりがない場合は無視してください。</p>
+        </div>
+      `
+    });
+    console.log('Team info email sent to:', toEmail);
+  } catch (e) {
+    console.error('Email send failed:', e);
+  }
+}
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
 function loadUsers() {
@@ -318,6 +377,7 @@ async function handleAuth(req, res, pathname) {
     const user = { id: crypto.randomUUID(), loginId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', demoGamesUsed: 0, createdAt: new Date().toISOString() };
     db.users.push(user);
     saveUsers(db);
+    sendTeamInfoEmail(email, loginId.toUpperCase(), password).catch(e => console.error('Email error:', e));
     const sid = crypto.randomBytes(32).toString('hex');
     sessions.set(sid, user.id);
     return json(res, 200, { user: publicUser(user), paid: false }, { 'set-cookie': 'bb_session=' + encodeURIComponent(sid) + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000' + secureCookieSuffix(req) });
@@ -656,7 +716,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v105-app-trial-button', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v125-team-email', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return await handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return await handleStripeWebhook(req, res);
     if (pathname === '/api/demo/new-game') return await handleDemoGame(req, res);
@@ -674,6 +734,7 @@ server.listen(PORT, HOST, () => {
   const shownHost = HOST === '0.0.0.0' ? '127.0.0.1' : HOST;
   console.log('http://' + shownHost + ':' + PORT + '/');
 });
+
 
 
 
