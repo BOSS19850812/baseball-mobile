@@ -133,6 +133,8 @@ function publicUser(user) {
   return {
     id: user.id,
     email: user.email || user.loginId,
+    teamId: user.teamId || user.loginId || null,
+    hasTeamPassword: !!user.passwordHash,
     plan: user.plan || 'free',
     subscriptionStatus: user.subscriptionStatus || 'inactive',
     subscriptionUntil: user.subscriptionUntil || null,
@@ -367,17 +369,21 @@ async function handleAuth(req, res, pathname) {
   if (pathname === '/api/auth/register') {
     if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
     const data = await readJson(req);
-    const loginId = String(data.loginId || data.email || '').trim().toLowerCase();
-    const password = String(data.password || '');
-    if (!/^[a-z0-9._-]{3,40}$/.test(loginId) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId)) return json(res, 400, { error: 'ログインIDは3文字以上で入力してください' });
-    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{9,}$/.test(password)) return json(res, 400, { error: 'パスワードは英字と数字を両方含む9文字以上で入力してください' });
+    const rawTeamId = String(data.teamId || data.loginId || '').trim().toUpperCase();
+    const teamId = rawTeamId.replace(/\s+/g, '');
+    const email = String(data.email || '').trim().toLowerCase();
+    const password = String(data.teamPassword || data.password || '');
+    if (!/^[A-Z0-9][A-Z0-9._-]{2,39}$/.test(teamId)) return json(res, 400, { error: 'チームIDは英数字3文字以上で入力してください' });
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json(res, 400, { error: '復旧用メールアドレスを入力してください' });
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{9,}$/.test(password)) return json(res, 400, { error: 'チームパスワードは英字と数字を両方含む9文字以上で入力してください' });
     const db = loadUsers();
-    if (db.users.find(u => (u.loginId || u.email) === loginId)) return json(res, 409, { error: 'このログインIDは登録済みです。ログインしてください' });
-    const email = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId) ? loginId : loginId + '@team.local';
-    const user = { id: crypto.randomUUID(), loginId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', demoGamesUsed: 0, createdAt: new Date().toISOString() };
+    const loginId = teamId.toLowerCase();
+    if (db.users.find(u => String(u.teamId || u.loginId || '').toLowerCase() === loginId)) return json(res, 409, { error: 'このチームIDは登録済みです。ログインしてください' });
+    if (db.users.find(u => String(u.email || '').toLowerCase() === email)) return json(res, 409, { error: 'このメールアドレスは登録済みです。ログインしてください' });
+    const user = { id: crypto.randomUUID(), loginId, teamId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', demoGamesUsed: 0, createdAt: new Date().toISOString() };
     db.users.push(user);
     saveUsers(db);
-    sendTeamInfoEmail(email, loginId.toUpperCase(), password).catch(e => console.error('Email error:', e));
+    sendTeamInfoEmail(email, teamId, password).catch(e => console.error('Email error:', e));
     const sid = crypto.randomBytes(32).toString('hex');
     sessions.set(sid, user.id);
     return json(res, 200, { user: publicUser(user), paid: false }, { 'set-cookie': 'bb_session=' + encodeURIComponent(sid) + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000' + secureCookieSuffix(req) });
@@ -395,6 +401,21 @@ async function handleAuth(req, res, pathname) {
     sessions.set(sid, user.id);
     return json(res, 200, { user: publicUser(user), paid: false }, { 'set-cookie': 'bb_session=' + encodeURIComponent(sid) + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000' + secureCookieSuffix(req) });
   }
+  if (pathname === '/api/auth/team-login') {
+    if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
+    const data = await readJson(req);
+    const teamId = String(data.teamId || data.loginId || '').trim().toLowerCase();
+    const teamPassword = String(data.teamPassword || data.password || '');
+    if (!/^[a-z0-9._-]{3,40}$/.test(teamId)) return json(res, 400, { error: 'チームIDは3文字以上で入力してください' });
+    if (!teamPassword) return json(res, 400, { error: 'チームパスワードを入力してください' });
+    const db = loadUsers();
+    const user = db.users.find(u => String(u.teamId || u.loginId || '').toLowerCase() === teamId);
+    if (!user || !user.passwordHash || !verifyPassword(teamPassword, user.passwordHash)) return json(res, 401, { error: 'チームIDまたはチームパスワードが違います' });
+    const sid = crypto.randomBytes(32).toString('hex');
+    sessions.set(sid, user.id);
+    return json(res, 200, { user: publicUser(user), paid: isPaid(user) }, { 'set-cookie': 'bb_session=' + encodeURIComponent(sid) + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000' + secureCookieSuffix(req) });
+  }
+
   if (pathname === '/api/auth/login') {
     if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
     const data = await readJson(req);
@@ -403,7 +424,7 @@ async function handleAuth(req, res, pathname) {
     if (!/^[a-z0-9._-]{3,40}$/.test(loginId) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(loginId)) return json(res, 400, { error: 'ログインIDは3文字以上で入力してください' });
     if (password.length < 4) return json(res, 400, { error: 'パスワードは4文字以上で入力してください' });
     const db = loadUsers();
-    let user = db.users.find(u => (u.loginId || u.email) === loginId);
+    let user = db.users.find(u => String(u.email || '').toLowerCase() === loginId || String(u.loginId || '').toLowerCase() === loginId || String(u.teamId || '').toLowerCase() === loginId);
     if (!user) {
       return json(res, 401, { error: '登録がありません。初めて利用する場合は新規登録してください' });
     } else if (user.passwordHash) {
@@ -716,7 +737,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const pathname = req.url.split('?')[0];
   try {
-    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v125-team-email', time: new Date().toISOString() });
+    if (pathname === '/api/health') return json(res, 200, { ok: true, version: process.env.APP_VERSION || 'v126-team-id-password', time: new Date().toISOString() });
     if (pathname === '/api/me' || pathname.startsWith('/api/auth/')) return await handleAuth(req, res, pathname);
     if (pathname === '/api/stripe/webhook') return await handleStripeWebhook(req, res);
     if (pathname === '/api/demo/new-game') return await handleDemoGame(req, res);

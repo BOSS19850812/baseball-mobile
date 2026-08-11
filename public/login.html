@@ -303,18 +303,29 @@
   <div class="modal-card">
     <button class="close" onclick="closeModal()">×</button>
     <div id="loginView">
-      <div class="eyebrow">登録済みの方</div><h3>チームにログイン</h3><p>チーム専用ログインIDとパスワードを入力してください。</p>
-      <div class="field"><label for="loginId">チームログインID</label><input id="loginId" type="text" autocomplete="username" placeholder="例：team-osaka または mail@example.com" /></div>
-      <div class="field"><label for="password">パスワード</label><input id="password" type="password" autocomplete="current-password" placeholder="パスワード" /></div>
-      <button class="btn btn-primary" onclick="login()">ログインして試合を始める</button>
+      <div class="eyebrow">登録済みの方</div><h3>チームにログイン</h3><p>チームIDとチームパスワードを入力してください。</p>
+      <div class="field"><label for="loginTeamId">チームID</label><input id="loginTeamId" type="text" autocomplete="username" placeholder="例：S6JUNIORS" /></div>
+      <div class="field"><label for="loginTeamPassword">チームパスワード</label><input id="loginTeamPassword" type="password" autocomplete="current-password" placeholder="チームパスワード" /></div>
+      <button class="btn btn-primary" onclick="loginWithTeam()">ログインして試合を始める</button>
+      <div class="sub-link">チームIDを忘れた方は <button onclick="switchModal('adminLogin')">メールアドレスで確認</button></div>
       <div class="sub-link">初めての方は <button onclick="switchModal('signup')">新規登録へ</button></div>
+    </div>
+    <div id="adminLoginView" style="display:none">
+      <div class="eyebrow">チームIDを忘れた方</div><h3>メールアドレスでログイン</h3><p>復旧用メールアドレスとパスワードでログインできます。</p>
+      <div class="field"><label for="adminEmail">復旧用メールアドレス</label><input id="adminEmail" type="email" autocomplete="email" placeholder="mail@example.com" /></div>
+      <div class="field"><label for="adminPassword">パスワード</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="パスワード" /></div>
+      <button class="btn btn-primary" onclick="adminLogin()">メールでログイン</button>
+      <div class="sub-link"><button onclick="switchModal('login')">チームIDログインへ戻る</button></div>
     </div>
     <div id="signupView" style="display:none">
       <div class="eyebrow">初めて利用する方</div><h3>チームを新規登録</h3><p>選択中: <b id="selectedPlanLabel">月額プラン</b>。登録後に選択した料金プランの決済画面へ進みます。</p>
-      <div class="field"><label for="regLoginId">新規登録 ログインID</label><input id="regLoginId" type="text" autocomplete="username" placeholder="例：team-osaka または mail@example.com" /></div><div class="field"><label for="regPassword">新規登録 パスワード（英数混合9文字以上）</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="英字と数字を含む9文字以上" /></div><button class="btn btn-primary" onclick="register()">新規登録して課金方法を選ぶ</button>
+      <div class="field"><label for="regTeamId">チームID</label><input id="regTeamId" type="text" autocomplete="username" placeholder="例：S6JUNIORS" /></div>
+      <div class="field"><label for="regTeamPassword">チームパスワード（英数混合9文字以上）</label><input id="regTeamPassword" type="password" autocomplete="new-password" placeholder="英字と数字を含む9文字以上" /></div>
+      <div class="field"><label for="regEmail">復旧用メールアドレス</label><input id="regEmail" type="email" autocomplete="email" placeholder="mail@example.com" /></div>
+      <button class="btn btn-primary" onclick="register()">新規登録して課金方法を選ぶ</button>
       <div class="sub-link">登録済みの方は <button onclick="switchModal('login')">ログインへ</button></div>
     </div><div id="authStatus" class="sub-link" style="margin-top:14px;color:#f5c451;font-weight:900"></div></div></div><script>
-  const APP_BUILD='v125-team-email';
+  const APP_BUILD='v126-team-id-password';
   let selectedPlan='monthly';
   const modal=document.getElementById('modal');
   const $=id=>document.getElementById(id);
@@ -323,16 +334,18 @@
   function setPlan(plan){selectedPlan=['monthly','yearly','lifetime'].includes(plan)?plan:'monthly';const el=$('selectedPlanLabel');if(el)el.textContent=planName()}
   function goApp(){location.href=appUrl()}
   function setStatus(text){const el=$('authStatus');if(el)el.textContent=text||''}
-  function openModal(type,plan){if(plan)setPlan(plan);modal.classList.add('show');switchModal(type);document.body.style.overflow='hidden';setTimeout(()=>{const id=type==='signup'?'regLoginId':'loginId';const el=$(id);if(el)el.focus()},80)}
+  function openModal(type,plan){if(plan)setPlan(plan);modal.classList.add('show');switchModal(type);document.body.style.overflow='hidden';setTimeout(()=>{const focusMap={signup:'regTeamId',adminLogin:'adminEmail',login:'loginTeamId'};const el=$(focusMap[type]||'loginTeamId');if(el)el.focus()},80)}
   function closeModal(){modal.classList.remove('show');document.body.style.overflow=''}
-  function switchModal(type){$('loginView').style.display=type==='login'?'block':'none';$('signupView').style.display=type==='signup'?'block':'none';setStatus('')}
+  function switchModal(type){$('loginView').style.display=type==='login'?'block':'none';$('signupView').style.display=type==='signup'?'block':'none';$('adminLoginView').style.display=type==='adminLogin'?'block':'none';setStatus('')}
   function scrollToInfo(){document.getElementById('info').scrollIntoView({behavior:'smooth'})}
   function openDetail(id){const d=document.getElementById(id);d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'})}
   async function api(path,options={}){const res=await fetch(path,{credentials:'same-origin',headers:{'content-type':'application/json',...(options.headers||{})},...options});const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(e){data={message:text}}if(!res.ok)throw new Error(data.message||'通信に失敗しました');return data}
   async function startTrial(){try{setStatus('お試しアカウントを準備中...');await api('/api/auth/trial',{method:'POST'});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'アプリ体験を開始できませんでした')}}
   async function startTrialDirect(){try{await api('/api/auth/trial',{method:'POST'});localStorage.removeItem('bb_guest_login');goApp()}catch(e){alert(e.message||'アプリ体験を開始できませんでした')}}
-  async function login(){const loginId=$('loginId').value.trim();const password=$('password').value;if(!loginId){setStatus('ログインIDを入力してください');$('loginId').focus();return}if(!password){setStatus('パスワードを入力してください');$('password').focus();return}try{setStatus('ログイン中...');await api('/api/auth/login',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'ログインできませんでした')}}
-  async function register(){const loginId=$('regLoginId').value.trim();const password=$('regPassword').value;if(!loginId){setStatus('新規登録のログインIDを入力してください');$('regLoginId').focus();return}if(!password){setStatus('新規登録のパスワードを入力してください');$('regPassword').focus();return}if(!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{9,}$/.test(password)){setStatus('パスワードは英字と数字を両方含む9文字以上で入力してください');$('regPassword').focus();return}try{setStatus('登録中...');await api('/api/auth/register',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');setStatus('登録完了。決済画面へ移動します...');const checkout=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan:selectedPlan})});if(checkout.url){location.href=checkout.url;return}setStatus(checkout.message||'登録完了。アプリ内の有料プランへ進んでください')}catch(e){setStatus(e.message||'登録できませんでした')}}
+  async function loginWithTeam(){const teamId=$('loginTeamId').value.trim().toUpperCase();const teamPassword=$('loginTeamPassword').value;if(!teamId){setStatus('チームIDを入力してください');$('loginTeamId').focus();return}if(!teamPassword){setStatus('チームパスワードを入力してください');$('loginTeamPassword').focus();return}try{setStatus('ログイン中...');await api('/api/auth/team-login',{method:'POST',body:JSON.stringify({teamId,teamPassword})});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'ログインできませんでした')}}
+  async function adminLogin(){const loginId=$('adminEmail').value.trim();const password=$('adminPassword').value;if(!loginId){setStatus('復旧用メールアドレスを入力してください');$('adminEmail').focus();return}if(!password){setStatus('パスワードを入力してください');$('adminPassword').focus();return}try{setStatus('ログイン中...');await api('/api/auth/login',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'ログインできませんでした')}}
+  async function login(){return loginWithTeam()}
+  async function register(){const teamId=$('regTeamId').value.trim().toUpperCase();const teamPassword=$('regTeamPassword').value;const email=$('regEmail').value.trim().toLowerCase();if(!/^[A-Z0-9][A-Z0-9._-]{2,39}$/.test(teamId)){setStatus('チームIDは英数字3文字以上で入力してください');$('regTeamId').focus();return}if(!teamPassword){setStatus('チームパスワードを入力してください');$('regTeamPassword').focus();return}if(!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{9,}$/.test(teamPassword)){setStatus('チームパスワードは英字と数字を両方含む9文字以上で入力してください');$('regTeamPassword').focus();return}if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){setStatus('復旧用メールアドレスを入力してください');$('regEmail').focus();return}try{setStatus('登録中...');await api('/api/auth/register',{method:'POST',body:JSON.stringify({teamId,teamPassword,email,loginId:teamId,password:teamPassword})});localStorage.removeItem('bb_guest_login');setStatus('登録完了。決済画面へ移動します...');const checkout=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan:selectedPlan})});if(checkout.url){location.href=checkout.url;return}setStatus(checkout.message||'登録完了。アプリ内の有料プランへ進んでください')}catch(e){setStatus(e.message||'登録できませんでした')}}
   modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
   window.addEventListener('load',()=>{setPlan('monthly');if(new URLSearchParams(location.search).get('signup')==='1')openModal('signup')});

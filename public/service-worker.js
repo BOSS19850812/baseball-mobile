@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v125-team-email";
+﻿const CACHE_NAME = "baseball-mobile-v126-team-id-password";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
