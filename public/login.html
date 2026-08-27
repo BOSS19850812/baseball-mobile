@@ -208,7 +208,6 @@
         <div class="hero-actions">
           <button class="btn btn-primary" onclick="openModal('login')">ログインして試合を始める</button>
           <button class="btn btn-ghost" onclick="openModal('signup')">初めて利用する</button>
-          <button class="btn btn-dark" onclick="startTrialDirect()">アプリ体験２試合</button>
         </div>
         <div class="micro">
           <span><b class="check">✓</b> 1チーム1契約</span>
@@ -293,7 +292,7 @@
   </section>
 
   <section class="cta">
-    <div class="shell"><div class="cta-card"><h2>試合の感動を、チーム全員で。</h2><p>入力はかんたん。速報はリアルタイム。成績は自動で蓄積。まずはログイン、または新規登録から始めてください。</p><div class="cta-actions"><button class="btn btn-primary" onclick="openModal('login')">ログインする</button><button class="btn btn-ghost" onclick="openModal('signup')">初めて利用する</button><button class="btn btn-dark" onclick="startTrialDirect()">アプリ体験２試合</button></div></div></div>
+    <div class="shell"><div class="cta-card"><h2>試合の感動を、チーム全員で。</h2><p>入力はかんたん。速報はリアルタイム。成績は自動で蓄積。まずはログイン、または新規登録から始めてください。</p><div class="cta-actions"><button class="btn btn-primary" onclick="openModal('login')">ログインする</button><button class="btn btn-ghost" onclick="openModal('signup')">初めて利用する</button></div></div></div>
   </section>
 </main>
 
@@ -341,8 +340,6 @@
   function scrollToInfo(){document.getElementById('info').scrollIntoView({behavior:'smooth'})}
   function openDetail(id){const d=document.getElementById(id);d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'})}
   async function api(path,options={}){const res=await fetch(path,{credentials:'same-origin',headers:{'content-type':'application/json',...(options.headers||{})},...options});const text=await res.text();let data={};try{data=text?JSON.parse(text):{}}catch(e){data={message:text}}if(!res.ok)throw new Error(data.message||'通信に失敗しました');return data}
-  async function startTrial(){try{setStatus('お試しアカウントを準備中...');await api('/api/auth/trial',{method:'POST'});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'アプリ体験を開始できませんでした')}}
-  async function startTrialDirect(){try{await api('/api/auth/trial',{method:'POST'});localStorage.removeItem('bb_guest_login');goApp()}catch(e){alert(e.message||'アプリ体験を開始できませんでした')}}
   async function loginWithTeam(){const teamId=$('loginTeamId').value.trim().toUpperCase();const teamPassword=$('loginTeamPassword').value;if(!teamId){setStatus('チームIDを入力してください');$('loginTeamId').focus();return}if(!teamPassword){setStatus('チームパスワードを入力してください');$('loginTeamPassword').focus();return}try{setStatus('ログイン中...');await api('/api/auth/team-login',{method:'POST',body:JSON.stringify({teamId,teamPassword})});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'ログインできませんでした')}}
   async function adminLogin(){const loginId=$('adminEmail').value.trim();const password=$('adminPassword').value;if(!loginId){setStatus('復旧用メールアドレスを入力してください');$('adminEmail').focus();return}if(!password){setStatus('パスワードを入力してください');$('adminPassword').focus();return}try{setStatus('ログイン中...');await api('/api/auth/login',{method:'POST',body:JSON.stringify({loginId,password})});localStorage.removeItem('bb_guest_login');goApp()}catch(e){setStatus(e.message||'ログインできませんでした')}}
   async function login(){return loginWithTeam()}

@@ -12,6 +12,20 @@ const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const VIEW_GAMES_FILE = path.join(DATA_DIR, 'view-games.json');
 const DEMO_GAME_LIMIT = 2;
+function normalizeEmail(raw){
+  const e = String(raw || '').trim().toLowerCase();
+  const at = e.lastIndexOf('@');
+  if (at < 0) return e;
+  let local = e.slice(0, at);
+  let domain = e.slice(at + 1);
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    local = local.split('+')[0].replace(/\./g, '');
+    domain = 'gmail.com';
+  } else {
+    local = local.split('+')[0];
+  }
+  return local + '@' + domain;
+}
 const sessions = new Map();
 
 function loadEnv() {
@@ -379,8 +393,9 @@ async function handleAuth(req, res, pathname) {
     const db = loadUsers();
     const loginId = teamId.toLowerCase();
     if (db.users.find(u => String(u.teamId || u.loginId || '').toLowerCase() === loginId)) return json(res, 409, { error: 'このチームIDは登録済みです。ログインしてください' });
-    if (db.users.find(u => String(u.email || '').toLowerCase() === email)) return json(res, 409, { error: 'このメールアドレスは登録済みです。ログインしてください' });
-    const user = { id: crypto.randomUUID(), loginId, teamId, email, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', demoGamesUsed: 0, createdAt: new Date().toISOString() };
+    const normEmail = normalizeEmail(email);
+    if (db.users.find(u => normalizeEmail(u.normalizedEmail || u.email) === normEmail)) return json(res, 409, { error: 'このメールアドレスは登録済みです。ログインしてください' });
+    const user = { id: crypto.randomUUID(), loginId, teamId, email, normalizedEmail: normEmail, passwordHash: hashPassword(password), plan: 'free', subscriptionStatus: 'inactive', demoGamesUsed: 0, createdAt: new Date().toISOString() };
     db.users.push(user);
     saveUsers(db);
     sendTeamInfoEmail(email, teamId, password).catch(e => console.error('Email error:', e));
@@ -390,16 +405,7 @@ async function handleAuth(req, res, pathname) {
   }
 
   if (pathname === '/api/auth/trial') {
-    if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
-    const db = loadUsers();
-    const token = crypto.randomBytes(4).toString('hex');
-    const loginId = 'trial-' + token;
-    const user = { id: crypto.randomUUID(), loginId, email: loginId + '@trial.local', passwordHash: '', plan: 'free', subscriptionStatus: 'inactive', demoGamesUsed: 0, trial: true, createdAt: new Date().toISOString() };
-    db.users.push(user);
-    saveUsers(db);
-    const sid = crypto.randomBytes(32).toString('hex');
-    sessions.set(sid, user.id);
-    return json(res, 200, { user: publicUser(user), paid: false }, { 'set-cookie': 'bb_session=' + encodeURIComponent(sid) + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000' + secureCookieSuffix(req) });
+    return json(res, 410, { error: 'お試しはメール登録制になりました。「初めて利用する」からチーム登録をお願いします。' });
   }
   if (pathname === '/api/auth/team-login') {
     if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
@@ -549,6 +555,7 @@ async function handleBilling(req, res, pathname) {
   }
 
   if (pathname === '/api/billing/demo-activate') {
+    if (process.env.ENABLE_DEMO_ACTIVATE !== '1') return json(res, 404, { error: 'not found' });
     if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
     const db = loadUsers();
     const stored = db.users.find(u => u.id === user.id);

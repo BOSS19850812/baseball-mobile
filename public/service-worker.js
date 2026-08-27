@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v127-modal-scroll-fix";
+﻿const CACHE_NAME = "baseball-mobile-v128-paywall-hardening";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",

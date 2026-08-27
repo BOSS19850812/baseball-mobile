@@ -58,7 +58,7 @@
     @media(max-width:380px){.two-col,.starter-box{grid-template-columns:1fr}.lineup-head,.lineup-row{grid-template-columns:30px 54px minmax(0,1fr) minmax(0,1fr);gap:4px}.title{font-size:16px}.tabs button{font-size:9px}.op{font-size:9px}.team{width:40px}th,td{font-size:9px}}
   </style>
 </head>
-<body>
+<body class="pay-locked">
 <div class="app">
   <div class="top"><div class="title" id="ttl"></div><div class="sub" id="sub"></div></div>
   <div class="tabs">
@@ -127,7 +127,7 @@ const Account=(()=>{
       const remaining=demoRemaining();
       el.innerHTML=remaining>0
         ? `<div style="text-align:center"><div style="color:#f2b83a;font-weight:900;font-size:15px;margin-bottom:8px">お試し中 — 残り${remaining}試合</div><div style="color:#bbb;font-size:13px;line-height:1.6;margin-bottom:6px">お試し終了後も継続利用するには、<br>下記プランをお選びください。</div></div>`
-        : `<div style="text-align:center"><div style="color:#ff6b6b;font-weight:900;font-size:15px;margin-bottom:8px">お試し期間が終了しました</div><div style="color:#bbb;font-size:13px;line-height:1.6;margin-bottom:6px">引き続きご利用いただくには、<br>下記プランをお選びください。</div></div>`;
+        : `<div style="text-align:center"><div style="color:#ff6b6b;font-weight:900;font-size:15px;margin-bottom:8px">お試しの2試合を使い切りました</div><div style="color:#bbb;font-size:13px;line-height:1.6;margin-bottom:6px">引き続きご利用いただくには、<br>下記プランをお選びください。</div></div>`;
     }else{
       el.innerHTML=statusText();
     }
@@ -144,7 +144,7 @@ const Account=(()=>{
   async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v126-team-id-password')}catch(e){console.warn(e)}}
   async function login(){location.href='./login.html?v=v126-team-id-password'}
   async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v126-team-id-password'}catch(e){alert(e.message)}}
-  async function startDemoGame(){if(!state.user||state.paid)return true;try{const data=await api('/api/demo/new-game',{method:'POST'});state.user=data.user;state.paid=!!data.paid;render();return true}catch(e){alert(e.message);return false}}
+  async function startDemoGame(){if(!state.user||state.paid)return true;try{const data=await api('/api/demo/new-game',{method:'POST'});state.user=data.user;state.paid=!!data.paid;render();return true}catch(e){alert('お試しの2試合を使い切りました。続けるにはプラン登録をお願いします。');await refresh();return false}}
   async function startCheckout(plan='monthly'){try{const data=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan})});if(data.url){location.href=data.url;return}alert(data.message||'決済画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function openPortal(){try{const data=await api('/api/billing/portal',{method:'POST'});if(data.url){location.href=data.url;return}alert(data.message||'契約管理画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function demoActivate(){try{const data=await api('/api/billing/demo-activate',{method:'POST'});state.user=data.user;state.paid=!!data.paid;render();alert('テスト用に有料プランへ変更しました')}catch(e){alert(e.message)}}
