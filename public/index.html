@@ -140,10 +140,10 @@ const Account=(()=>{
   const url=$("viewerUrl");if(url&&lastViewerUrl)url.value=lastViewerUrl;
   const actCard=$("accountActionsCard");if(actCard)actCard.style.display=(state.user&&state.user.email)?'block':'none';
 }
-  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v126-team-id-password');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v126-team-id-password');return}}
-  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v126-team-id-password')}catch(e){console.warn(e)}}
-  async function login(){location.href='./login.html?v=v126-team-id-password'}
-  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v126-team-id-password'}catch(e){alert(e.message)}}
+  async function refresh(){localStorage.removeItem('bb_guest_login');try{const data=await api('/api/me');state.user=data.user;state.paid=!!data.paid;if(state.user&&state.user.id)localStorage.setItem('bb_current_user_id',state.user.id);if(!state.user){location.replace('./login.html?v=v129-trial-button-secure');return}render();await verifyCheckout(!state.paid)}catch(e){location.replace('./login.html?v=v129-trial-button-secure');return}}
+  async function verifyCheckout(force=false){const p=new URLSearchParams(location.search);const sid=p.get('session_id')||'';if(!state.user)return;if(!force&&(p.get('checkout')!=='success'||!sid))return;try{const path=sid?'/api/billing/verify-session?session_id='+encodeURIComponent(sid):'/api/billing/verify-session';const data=await api(path,{method:'GET'});state.user=data.user;state.paid=!!data.paid;render();if(p.get('checkout')==='success')history.replaceState(null,'',location.pathname+'?v=v129-trial-button-secure')}catch(e){console.warn(e)}}
+  async function login(){location.href='./login.html?v=v129-trial-button-secure'}
+  async function logout(){try{await api('/api/auth/logout',{method:'POST'});localStorage.removeItem('bb_guest_login');localStorage.removeItem('bb_current_user_id');state={user:null,paid:false};location.href='./login.html?v=v129-trial-button-secure'}catch(e){alert(e.message)}}
   async function startDemoGame(){if(!state.user||state.paid)return true;try{const data=await api('/api/demo/new-game',{method:'POST'});state.user=data.user;state.paid=!!data.paid;render();return true}catch(e){alert('お試しの2試合を使い切りました。続けるにはプラン登録をお願いします。');await refresh();return false}}
   async function startCheckout(plan='monthly'){try{const data=await api('/api/billing/checkout',{method:'POST',body:JSON.stringify({plan})});if(data.url){location.href=data.url;return}alert(data.message||'決済画面はまだ未設定です')}catch(e){alert(e.message)}}
   async function openPortal(){try{const data=await api('/api/billing/portal',{method:'POST'});if(data.url){location.href=data.url;return}alert(data.message||'契約管理画面はまだ未設定です')}catch(e){alert(e.message)}}
@@ -868,7 +868,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v126-team-id-password';
+const APP_BUILD='v129-trial-button-secure';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;

@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "baseball-mobile-v128-paywall-hardening";
+﻿const CACHE_NAME = "baseball-mobile-v129-trial-button-secure";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
