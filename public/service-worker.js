@@ -1,7 +1,8 @@
-﻿const CACHE_NAME = "baseball-mobile-v130-field-menu-ui";
+const CACHE_NAME = "baseball-mobile-v131-hit-runner-flow";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
+  "./hit-play-engine.js",
   "./login.html",
   "./view.html",
   "./manifest.json",
@@ -33,44 +34,3 @@ self.addEventListener("fetch", event => {
   }
   event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

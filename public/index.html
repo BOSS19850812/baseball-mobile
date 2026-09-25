@@ -108,6 +108,7 @@
     <div class="card"><div class="head">ビジター選手入力</div><div class="input-help">守備位置と選手名を入力します。空欄でも試合入力はできます。</div><div class="form-block" id="awayInput"></div><button class="save" onclick="saveLineup('away')">ビジター選手を保存</button></div>
   </div>
 </div>
+<script src="./hit-play-engine.js"></script>
 <script>
 
 const Account=(()=>{
@@ -157,9 +158,9 @@ const bs=()=>({ab:0,h:0,d2:0,d3:0,hr:0,rbi:0,k:0,bb:0,hbp:0,sb:0,sac:0});
 const mk=()=>Array.from({length:25},(_,i)=>({pos:i<9?DEF[i]:'-',name:'',ruby:'',stat:bs()}));
 let st=load()||{home:'ホーム',away:'ビジター',sub:'携帯用 野球速報',hs:'',as:'',first:'away',inn:1,half:'表',b:0,s:0,o:0,score:{home:Array(9).fill(null),away:Array(9).fill(null)},total:{home:0,away:0},hits:{home:0,away:0},err:{home:0,away:0},r:{1:false,2:false,3:false},rp:{1:null,2:null,3:null},ord:{home:1,away:1},play:'プレーなし',ps:'守備位置をタップして入力',fl:'PLAY',hist:[],snap:[],players:{home:mk(),away:mk()},line:{home:[0,1,2,3,4,5,6,7,8],away:[0,1,2,3,4,5,6,7,8]}};
 function teamStorageKey(){let u=Account&&Account.state&&Account.state.user,uid=(u&&u.id)||localStorage.getItem('bb_current_user_id');return uid?LS+'_'+uid:LS}function load(){try{return JSON.parse(localStorage.getItem(teamStorageKey()))}catch(e){return null}}function save(){localStorage.setItem(teamStorageKey(),JSON.stringify({...st,snap:[]}));if(typeof Account!=='undefined'&&Account.scheduleViewerSync)Account.scheduleViewerSync()}
-function norm(){if(st.hs==null)st.hs='';if(st.as==null)st.as='';['home','away'].forEach(t=>{while(st.players[t].length<25)st.players[t].push({pos:'-',name:'',ruby:'',stat:bs()});st.players[t].forEach((p,i)=>{if(!p.stat)p.stat=bs();if(!p.pos)p.pos=i<9?DEF[i]:'-';if(p.ruby==null)p.ruby=''})})}
+function norm(){if(st.hs==null)st.hs='';if(st.as==null)st.as='';if(!Array.isArray(st.playDetails))st.playDetails=[];['home','away'].forEach(t=>{while(st.players[t].length<25)st.players[t].push({pos:'-',name:'',ruby:'',stat:bs()});st.players[t].forEach((p,i)=>{if(!p.stat)p.stat=bs();if(!p.pos)p.pos=i<9?DEF[i]:'-';if(p.ruby==null)p.ruby=''})})}
 function side(){return st.first==='away'?(st.half==='表'?'away':'home'):(st.half==='表'?'home':'away')}function def(){return side()==='home'?'away':'home'}function innIndex(){return Math.min(8,st.inn-1)}function bi(){return st.line[side()][st.ord[side()]-1]}function name(t,i){return st.players[t][i].name||'選手'+(i+1)}function cb(){return st.ord[side()]+'番 '+name(side(),bi())}
-function snap(){let c=JSON.parse(JSON.stringify(st));c.snap=[];st.snap.push(c);if(st.snap.length>80)st.snap.shift()}function undo(){if(st.snap.length){let a=st.snap;st=a.pop();st.snap=a;render(true)}}function ss(a,b='',f='PLAY'){st.play=a;st.ps=b;st.fl=f;st.playOrd=st.ord[side()]}
+function snap(){let c=JSON.parse(JSON.stringify(st));c.snap=[];if(typeof Commentary!=='undefined'&&Commentary.historyLength)c.__commentaryHistoryLength=Commentary.historyLength();st.snap.push(c);if(st.snap.length>80)st.snap.shift()}function undo(){if(st.snap.length){let a=st.snap,restored=a.pop(),historyLength=restored.__commentaryHistoryLength;delete restored.__commentaryHistoryLength;st=restored;st.snap=a;if(typeof Commentary!=='undefined'&&Commentary.restoreHistoryLength)Commentary.restoreHistoryLength(historyLength);render(true)}}function ss(a,b='',f='PLAY'){st.play=a;st.ps=b;st.fl=f;st.playOrd=st.ord[side()]}
 function addScore(n){let t=side(),i=innIndex();if(st.score[t][i]==null)st.score[t][i]=0;st.score[t][i]+=n;st.total[t]+=n}function addOut(n=1){st.o+=n}
 function clearCount(){st.b=0;st.s=0}function next(){let t=side();st.ord[t]=st.ord[t]%9+1}function change(){if(st.o<3)return;let t=side(),i=innIndex();if(st.score[t][i]==null)st.score[t][i]=0;st.o=0;clearCount();st.r={1:false,2:false,3:false};st.rp={1:null,2:null,3:null};clearLine();if(st.half==='表')st.half='裏';else{st.half='表';if(st.inn<9)st.inn++}}
 function bat(k,r=0){if(side()!=='home')return;let s=st.players.home[bi()].stat;if(['1b','2b','3b','hr','out','k'].includes(k))s.ab++;if(['1b','2b','3b','hr'].includes(k))s.h++;if(k==='2b')s.d2++;if(k==='3b')s.d3++;if(k==='hr')s.hr++;if(k==='k')s.k++;if(k==='bb')s.bb++;if(k==='hbp')s.hbp++;if(k==='sac')s.sac++;s.rbi+=r}
@@ -272,6 +273,8 @@ const Commentary=(()=>{
     if(!history.length){box.innerHTML='<div class="commentary-item">実況履歴なし</div>';return}
     box.innerHTML=history.slice().reverse().map(x=>'<div class="commentary-item"><span class="commentary-time">['+x.time+']</span>'+x.text+'</div>').join('');
   }
+  function historyLength(){return history.length}
+  function restoreHistoryLength(length){if(!Number.isFinite(Number(length)))return;history=history.slice(0,Math.max(0,Number(length)));saveHistory();renderHistory()}
 const TTS_EXCEL_PATTERNS=[
   ["1番 〇〇 センター前ヒット 0アウト ランナーなし", "いちばん、〇〇。せんたーまえひっと。ノーアウト、らんなーなし。"],
   ["4番 〇〇 ホームラン 打点3 3アウト チェンジ", "よばん、〇〇。ほーむらん だてんさん。スリーアウト、らんなーちぇんじ。"],
@@ -717,7 +720,7 @@ function applyTtsExcelPatterns(text){let out=String(text||'');TTS_EXCEL_PATTERNS
   function setEngine(v){settings.engine=v==='openai'?'openai':'browser';saveSettings();updateUi()}
   async function test(){settings.voiceEnabled=true;await syncServerTts();saveSettings();updateUi();stopCurrentSpeech(true);add('ElevenLabs音声テスト 1番 山田 センター前ヒット')}
   function init(){load();updateUi();if(!initialized){initialized=true;syncServerTts()}}
-  return{init,add,speak,record,renderHistory,toggleVoice,setRate,setEngine,test,settings,commentaryQueue,makeCommentary};
+  return{init,add,speak,record,renderHistory,historyLength,restoreHistoryLength,toggleVoice,setRate,setEngine,test,settings,commentaryQueue,makeCommentary};
 })();
 function isTtsEnabled(){return Commentary.settings.voiceEnabled}
 function setTtsEnabled(on){Commentary.settings.voiceEnabled=!!on;localStorage.setItem('bb_commentary_settings_v1',JSON.stringify(Commentary.settings));Commentary.init()}
@@ -784,25 +787,101 @@ const HIT_MOVES={b1:{r3:3,r2:2,r1:1},b2:{r3:3,r2:2,r1:1},b3:{r3:3,r2:2,r1:1},r2h
 const INF_MOVES={b1:{r3:3,r2:2,r1:1},b2:{r3:3,r2:2,r1:1},r1to2:{r3:3,r2:2,r1:2},r1to3:{r3:3,r2:2,r1:3},r2to3:{r3:3,r2:3,r1:2},r2home:{r3:3,r2:'H',r1:2},r3home:{r3:'H',r2:3,r1:2},bases1:{r3:'H',r2:3,r1:2}};
 function applyRunnerPlay(o){snap();let batter=bi(),runs={1:st.r[1],2:st.r[2],3:st.r[3]},ps={1:st.rp[1],2:st.rp[2],3:st.rp[3]},rbi=0,nr={1:false,2:false,3:false},np={1:null,2:null,3:null};clearCount();if(o.countHit)st.hits[side()]++;if(o.isErr)st.err[def()]++;if(o.isOut)addOut(1);[3,2,1].forEach(b=>{if(!runs[b])return;let to=o.moves['r'+b];if(to==='H'){addScore(1);rbi++}else{nr[to]=true;np[to]=ps[b]}});if(o.batterHome){addScore(1)}else if(o.batBase){nr[o.batBase]=true;np[o.batBase]=batter}st.r=nr;st.rp=np;draw(o.key,o.label);let playLabel=o.isErr?errBatterText(o.label,o.batterHome?'本':String(o.batBase||1)):o.label;ss(playLabel,rbi?rbi+'得点':o.sub,o.flash);if(o.stat)bat(o.stat,rbi);hlog(playLabel,rbi);if(o.isOut&&st.o>=3)change();else next();closeSheets();render()}
 function applyHitAdvance(kind,key,label,mode){if(mode==='close'){closeSheets();return}if(mode==='back'){fieldMenu(key);return}if(mode==='normal'){closeSheets();return hit(Number(kind.replace('hit','')),key,label)}let hitBase=kind==='hit1'?1:kind==='hit2'?2:3,isErr=/^(erradv|throwadv)/.test(mode),batBase=/^b[123]$/.test(mode)?Number(mode[1]):hitBase,batterHome=false,moves=HIT_MOVES[mode]||HIT_MOVES.b1,playLabel=label;if(isErr){let isThrow=mode.indexOf('throwadv')===0,toThird=/3$/.test(mode),toHome=/H$/.test(mode);moves=hitBase===1?{r3:'H',r2:'H',r1:3}:hitBase===2?{r3:'H',r2:'H',r1:'H'}:{r3:'H',r2:'H',r1:'H'};batBase=hitBase===1?2:3;if(toThird){batBase=3}if(toHome){batBase=0;batterHome=true}playLabel=label+(isThrow?' 悪送球進塁':' エラー進塁')+(toThird?'3塁':toHome?'本塁':'')}applyRunnerPlay({key:key,label:playLabel,moves:moves,batBase:batBase,batterHome:batterHome,stat:kind==='hit1'?'1b':kind==='hit2'?'2b':'3b',countHit:true,isErr:isErr,sub:isErr?'ERROR':'走者選択',flash:isErr?'ERROR':'HIT'})}
-function fma(c){if(/^hit[123]:/.test(c))return hitAdvanceMenu(c);if(/^out:/.test(c))return outAdvanceMenu(c);closeSheets();act(c)}function closeSheets(){$('fm').classList.remove('show');$('rm').classList.remove('show')}
-function infieldRunMenu(c){let [kind,key,label]=c.split(':'),cls=kind==='err'?'err':kind==='out'?'sp':'hit';$('fmt').textContent=(label||'内野プレー')+' 走者選択';let opts=[['通常','normal',cls],['打者1塁','b1','hit'],['打者2塁','b2','dbl'],['1塁走者2塁','r1to2','hit'],['1塁走者3塁','r1to3','dbl'],['2塁走者3塁','r2to3','dbl'],['2塁走者生還','r2home','tri'],['3塁走者生還','r3home','tri'],['満塁1点','bases1','tri'],['悪送球進塁','throwadv','err'],['エラー進塁','erradv','err'],['戻る','back','close'],['閉じる','close','close']];$('fmg').innerHTML=opts.map(x=>`<button class="${x[2]}" onclick="applyInfieldRun('${kind}','${key}','${label||'内野プレー'}','${x[1]}')">${x[0]}</button>`).join('')+undoButton();$('fm').classList.add('show');fitMenuButtons()}
+const HitFlow=(()=>{
+  let flow=null;
+  const E=HitPlayEngine;
+  function show(title,buttons){
+    $('fmt').textContent=title;
+    $('fmg').innerHTML=buttons.map(b=>`<button class="${b[1]}" onclick="${b[2]}">${b[0]}</button>`).join('');
+    $('fm').classList.add('show');
+    fitMenuButtons();
+  }
+  function cancel(){flow=null;closeSheets()}
+  function resultClass(option){if(option.kind==='tagOut')return 'outc';if(option.kind==='stay')return 'close';if(option.destination==='H'||option.destination===3)return 'tri';if(option.destination===2)return 'dbl';return 'hit'}
+  function route(){
+    if(!flow)return;
+    if(flow.phase==='normal'){
+      const runner=E.nextNormalRunner(flow),options=E.normalOptions(flow,runner.id);
+      return show(flow.label+' / '+E.runnerName(runner),options.map(o=>[o.label,resultClass(o),`HitFlow.normal('${runner.id}','${o.code}')`]).concat([['入力取消','close','HitFlow.cancel()']]));
+    }
+    if(flow.phase==='additional-select'){
+      return show(flow.label+' / 追加プレー',[
+        ['なし','close',"HitFlow.additional('none')"],['後逸','err',"HitFlow.additional('passed')"],['悪送球','err',"HitFlow.additional('throwing')"],
+        ['送球間','sp',"HitFlow.additional('throw')"],['挟殺','outc',"HitFlow.additional('rundown')"],['入力取消','close','HitFlow.cancel()']
+      ]);
+    }
+    if(flow.phase==='additional-runner'){
+      const runner=E.nextExtraRunner(flow),options=E.extraOptions(flow,runner.id),cause=E.CAUSE_NAMES[flow.additional];
+      return show(cause+' / '+E.runnerName(runner,true),options.map(o=>[o.label,resultClass(o),`HitFlow.extra('${runner.id}','${o.code}')`]).concat([['入力取消','close','HitFlow.cancel()']]));
+    }
+    if(flow.phase==='rundown-runner'){
+      const targets=E.rundownTargets(flow);
+      return show('挟殺 / 対象走者',targets.map(r=>[E.runnerName(r,true),'outc',`HitFlow.rundownRunner('${r.id}')`]).concat([['入力取消','close','HitFlow.cancel()']]));
+    }
+    if(flow.phase==='rundown-interval'){
+      const options=E.rundownIntervals(flow);
+      return show('挟殺 / 挟まれた塁間',options.map(o=>[o.label,'outc',`HitFlow.rundownInterval('${o.code}')`]).concat([['入力取消','close','HitFlow.cancel()']]));
+    }
+    if(flow.phase==='rundown-result'){
+      const options=E.rundownResultOptions(flow);
+      return show('挟殺 / 結果',options.map(o=>[o.label,/悪送球|後逸/.test(o.label)?'err':o.code==='out'?'outc':o.code==='advance'?'tri':'sp',`HitFlow.rundownResult('${o.code}')`]).concat([['入力取消','close','HitFlow.cancel()']]));
+    }
+    if(flow.phase==='complete'){
+      const r=E.result(flow),summary=[r.runs?r.runs+'得点':'得点なし',r.outs?r.outs+'アウト':'アウトなし',r.error?(E.CAUSE_NAMES[r.errorType]||'失策'):'失策なし'].join(' / ');
+      return show(flow.label+' / '+summary,[['確定','hit','HitFlow.confirm()'],['入力取消','close','HitFlow.cancel()']]);
+    }
+  }
+  function start(command){
+    const parts=String(command).split(':'),kind=parts.shift(),key=parts.shift()||'center',label=parts.join(':')||'ヒット',hitBase=Number(kind.replace('hit',''));
+    const runners=[1,2,3].filter(base=>st.r[base]).map(base=>({originBase:base,playerIndex:st.rp[base]}));
+    flow=E.create({hitBase,key,label,outs:st.o,batterPlayerIndex:bi(),runners,automaticAward:/エンタイトル二塁打/.test(label)});
+    route();
+  }
+  function normal(id,code){E.applyNormal(flow,id,code);route()}
+  function additional(cause){E.selectAdditional(flow,cause);route()}
+  function extra(id,code){E.applyExtra(flow,id,code);route()}
+  function rundownRunner(id){E.selectRundownRunner(flow,id);route()}
+  function rundownInterval(interval){E.selectRundownInterval(flow,interval);route()}
+  function rundownResult(code){E.applyRundownResult(flow,code);route()}
+  function confirm(){
+    if(!flow||flow.phase!=='complete')return;
+    const completed=flow,result=E.result(completed),battingTeam=side();
+    snap();
+    st.hits[battingTeam]++;
+    clearCount();
+    if(result.runs)addScore(result.runs);
+    if(result.outs)addOut(result.outs);
+    if(result.error)st.err[def()]++;
+    st.r={1:false,2:false,3:false};st.rp={1:null,2:null,3:null};
+    result.active.forEach(r=>{st.r[r.currentBase]=true;st.rp[r.currentBase]=r.playerIndex});
+    draw(completed.key,completed.label);
+    bat(completed.hitBase===1?'1b':completed.hitBase===2?'2b':'3b',result.rbi);
+    const detail={...result.detail,at:new Date().toISOString(),battingTeam,batterIndex:completed.runners.find(r=>r.id==='batter').playerIndex,commentary:result.commentary};
+    st.lastPlayDetail=detail;if(!Array.isArray(st.playDetails))st.playDetails=[];st.playDetails.push(detail);if(st.playDetails.length>80)st.playDetails.shift();
+    const isChange=st.o>=3,summary=[result.runs?result.runs+'得点':'',result.outs?result.outs+'アウト':'',result.error?(E.CAUSE_NAMES[result.errorType]||'失策'):''].filter(Boolean).join(' / ');
+    ss(result.commentary,isChange?'3アウト チェンジ':summary,completed.hitBase===1?'HIT':completed.hitBase===2?'DOUBLE':'TRIPLE');
+    hlog(result.commentary+(isChange?' チェンジ':''),result.rbi);
+    next();if(isChange)change();
+    flow=null;closeSheets();render();
+  }
+  return{start,normal,additional,extra,rundownRunner,rundownInterval,rundownResult,confirm,cancel,get flow(){return flow}};
+})();
+function fma(c){if(/^hit[123]:/.test(c)&&!/FC/.test(c))return HitFlow.start(c);if(/^hit[123]:/.test(c))return hitAdvanceMenu(c);if(/^out:/.test(c))return outAdvanceMenu(c);closeSheets();act(c)}function closeSheets(){$('fm').classList.remove('show');$('rm').classList.remove('show')}
+function infieldRunMenu(c){if(/^hit[123]:/.test(c)&&!/FC/.test(c))return HitFlow.start(c);let [kind,key,label]=c.split(':'),cls=kind==='err'?'err':kind==='out'?'sp':'hit';$('fmt').textContent=(label||'内野プレー')+' 走者選択';let opts=[['通常','normal',cls],['打者1塁','b1','hit'],['打者2塁','b2','dbl'],['1塁走者2塁','r1to2','hit'],['1塁走者3塁','r1to3','dbl'],['2塁走者3塁','r2to3','dbl'],['2塁走者生還','r2home','tri'],['3塁走者生還','r3home','tri'],['満塁1点','bases1','tri'],['悪送球進塁','throwadv','err'],['エラー進塁','erradv','err'],['戻る','back','close'],['閉じる','close','close']];$('fmg').innerHTML=opts.map(x=>`<button class="${x[2]}" onclick="applyInfieldRun('${kind}','${key}','${label||'内野プレー'}','${x[1]}')">${x[0]}</button>`).join('')+undoButton();$('fm').classList.add('show');fitMenuButtons()}
 function applyInfieldRun(kind,key,label,mode){if(mode==='close'){closeSheets();return}if(mode==='back'){fieldMenu(key);return}if(mode==='normal'){closeSheets();return act(`${kind}:${key}:${label}`)}let isThrow=mode==='throwadv',isExtraErr=mode==='erradv'||isThrow,isErr=kind==='err'||isExtraErr,isOut=kind==='out',moves=INF_MOVES[mode]||INF_MOVES.b1,batBase=mode==='b2'?2:1,playLabel=label;if(isExtraErr){moves={r3:'H',r2:'H',r1:3};batBase=2;playLabel=label+(isThrow?' 悪送球進塁':' エラー進塁')}applyRunnerPlay({key:key,label:playLabel,moves:moves,batBase:batBase,stat:kind==='hit1'?'1b':(isOut&&isSacLabel(label)?'sac':null),countHit:kind==='hit1',isErr:isErr,isOut:isOut,sub:isErr?'ERROR':isOut?'OUT':'RUN',flash:isErr?'ERROR':'RUN'})}function outfieldDetail(z,type){
   let n=Z[z],gap=z==='left'?'左中間':z==='right'?'右中間':'左中間・右中間',line=z==='left'?'レフト線':z==='right'?'ライト線':n+'前',stand=z==='left'?'レフトスタンド':z==='right'?'ライトスタンド':'バックスクリーン',items=[];
-  if(type==='hit')items=[
-    [n+'前ヒット',`hit1:${z}:${n}前ヒット`,'hit'],[line+'ヒット',`hit1:${z}:${line}ヒット`,'hit'],[gap+'ヒット',`hit1:${z}:${gap}ヒット`,'hit'],
-    [n+'前ポテン',`hit1:${z}:${n}前ポテンヒット`,'hit'],[n+'強襲ヒット',`hit1:${z}:${n}強襲ヒット`,'hit'],['テキサスヒット',`hit1:${z}:テキサスヒット`,'hit'],
-    ['タイムリーヒット',`hit1:${z}:${n}タイムリーヒット`,'hit'],['落球判定ヒット',`hit1:${z}:落球判定ヒット`,'hit']
-  ];
-  if(type==='double')items=[
-    [line+'二塁打',`hit2:${z}:${line}二塁打`,'dbl'],[gap+'二塁打',`hit2:${z}:${gap}二塁打`,'dbl'],[n+'オーバー二塁打',`hit2:${z}:${n}オーバー二塁打`,'dbl'],
-    ['フェンス直撃二塁打',`hit2:${z}:フェンス直撃二塁打`,'dbl'],['エンタイトル二塁打',`hit2:${z}:エンタイトル二塁打`,'dbl'],[n+'後逸二塁打',`hit2:${z}:${n}後逸二塁打`,'dbl'],
-    ['タイムリー二塁打',`hit2:${z}:タイムリー二塁打`,'dbl'],['クッション処理二塁打',`hit2:${z}:クッション処理二塁打`,'dbl']
-  ];
-  if(type==='triple')items=[
-    [line+'三塁打',`hit3:${z}:${line}三塁打`,'tri'],[gap+'三塁打',`hit3:${z}:${gap}三塁打`,'tri'],[n+'オーバー三塁打',`hit3:${z}:${n}オーバー三塁打`,'tri'],
-    ['フェンス直撃三塁打',`hit3:${z}:フェンス直撃三塁打`,'tri'],[n+'後逸三塁打',`hit3:${z}:${n}後逸三塁打`,'tri'],['クッション処理三塁打',`hit3:${z}:クッション処理三塁打`,'tri'],
-    ['タイムリー三塁打',`hit3:${z}:タイムリー三塁打`,'tri']
-  ];
+  if(type==='hit'){
+    const hitLabels=z==='left'?['レフト前ヒット','レフト線ヒット','左中間ヒット','レフトテキサスヒット','レフト強襲ヒット']:z==='right'?['ライト前ヒット','ライト線ヒット','右中間ヒット','ライトテキサスヒット','ライト強襲ヒット']:['センター前ヒット','左中間ヒット','右中間ヒット','センターテキサスヒット','センター強襲ヒット'];
+    items=hitLabels.map(label=>[label,`hit1:${z}:${label}`,'hit']);
+  }
+  if(type==='double'){
+    const doubleLabels=z==='left'?['レフト線二塁打','左中間二塁打','レフトオーバー二塁打','フェンス直撃二塁打','エンタイトル二塁打']:z==='right'?['ライト線二塁打','右中間二塁打','ライトオーバー二塁打','フェンス直撃二塁打','エンタイトル二塁打']:['左中間二塁打','右中間二塁打','センターオーバー二塁打','フェンス直撃二塁打','エンタイトル二塁打'];
+    items=doubleLabels.map(label=>[label,`hit2:${z}:${label}`,'dbl']);
+  }
+  if(type==='triple'){
+    const tripleLabels=z==='left'?['レフト線三塁打','左中間三塁打','レフトオーバー三塁打','フェンス直撃三塁打']:z==='right'?['ライト線三塁打','右中間三塁打','ライトオーバー三塁打','フェンス直撃三塁打']:['左中間三塁打','右中間三塁打','センターオーバー三塁打','フェンス直撃三塁打'];
+    items=tripleLabels.map(label=>[label,`hit3:${z}:${label}`,'tri']);
+  }
   if(type==='hr')items=[
     [n+'ホームラン',`hr:${z}`,'tri'],[gap+'ホームラン',`hr:${z}`,'tri'],[stand+'HR',`hr:${z}`,'tri'],['ライナー性HR',`hr:${z}`,'tri'],
     ['満塁ホームラン',`hr:${z}`,'tri'],['代打ホームラン',`hr:${z}`,'tri'],['サヨナラHR',`hr:${z}`,'tri']
@@ -907,7 +986,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v130-field-menu-ui';
+const APP_BUILD='v131-hit-runner-flow';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;

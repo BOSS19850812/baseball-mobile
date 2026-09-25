@@ -5,7 +5,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check public/service-worker.js"
+    "check": "node --check server.js && node --check public/service-worker.js && node --check public/hit-play-engine.js",
+    "test": "node tests/hit-play-engine.test.js"
   },
   "engines": {
     "node": ">=20"
