@@ -80,10 +80,11 @@
         <div id="rm" class="sheet"><div class="sheet-title" id="rmt"></div><div class="sheet-grid" id="rmg"></div></div>
       </div>
       <div class="field-actions"><button class="bo" onclick="act('ball')">ボール</button><button class="st" onclick="act('strike')">ストライク</button><button class="ou" onclick="act('outonly')">アウト</button></div>
+      <div id="fieldMenuBox"></div>
     </div>
     <div class="card"><div class="head">速報履歴</div><div class="hist" id="hist2"></div></div>
   </div>
-  <div id="ops" class="page"><div class="card"><div class="head">実況設定</div><div class="commentary-panel"><div class="commentary-tools"><button id="voiceToggleBtn" type="button" onclick="Commentary.toggleVoice()">音声OFF</button><button class="btn2" type="button" onclick="Commentary.test()">テスト再生</button></div><div class="commentary-row"><span>速度</span><input id="voiceRateRange" type="range" min="0.8" max="1.5" step="0.1" value="1.1" oninput="Commentary.setRate(this.value)"><b id="voiceRateLabel">1.1</b></div><div class="commentary-row"><span>方式</span><select id="voiceEngineSelect" onchange="Commentary.setEngine(this.value)"><option value="browser">ブラウザ音声</option><option value="openai">サーバーTTS</option></select><b></b></div><div class="input-help">通常はブラウザ音声で使えます。サーバーTTSは.envにOpenAIまたはElevenLabsのAPIキーを入れた時だけ使えます。</div><div class="commentary-history" id="commentaryHistory"><div class="commentary-item">実況履歴なし</div></div></div></div><div class="card"><div class="head">操作メニュー</div><div class="input-help">プレー種別を選び、守備位置や結果を続けて入力します。</div></div><div class="ops" id="opbox"></div></div>
+  <div id="ops" class="page"><div class="card"><div class="head">実況設定</div><div class="commentary-panel"><div class="commentary-tools"><button id="voiceToggleBtn" type="button" onclick="Commentary.toggleVoice()">音声OFF</button><button class="btn2" type="button" onclick="Commentary.test()">テスト再生</button></div><div class="commentary-row"><span>速度</span><input id="voiceRateRange" type="range" min="0.8" max="1.5" step="0.1" value="1.1" oninput="Commentary.setRate(this.value)"><b id="voiceRateLabel">1.1</b></div><div class="commentary-row"><span>方式</span><select id="voiceEngineSelect" onchange="Commentary.setEngine(this.value)"><option value="browser">ブラウザ音声</option><option value="openai">サーバーTTS</option></select><b></b></div><div class="input-help">通常はブラウザ音声で使えます。サーバーTTSは.envにOpenAIまたはElevenLabsのAPIキーを入れた時だけ使えます。</div><div class="commentary-history" id="commentaryHistory"><div class="commentary-item">実況履歴なし</div></div></div></div></div>
   <div id="subs" class="page"><div class="card"><div class="head">交代入力</div><div class="input-help">代打・代走・守備交代を選んで、打順に入る選手を変更できます。</div><div class="form-block"><label><span class="form-label">チーム</span><select id="subTeam"><option value="home">ホーム</option><option value="away">ビジター</option></select></label><label><span class="form-label">交代種類</span><select id="subType"><option>代打</option><option>代走</option><option>守備交代</option></select></label><label><span class="form-label">交代する打順</span><select id="subOrder"></select></label><label><span class="form-label">新しく入る選手</span><select id="subPlayer"></select></label><label><span class="form-label">守備位置</span><select id="subPos"></select></label><button class="save" onclick="doSub()">交代を反映</button></div></div><div class="card"><div class="head">現在の打順</div><div id="subCur"></div></div></div>
   <div id="stats" class="page"><div class="card"><div class="head">ホーム打撃成績</div><div class="scroll" id="batStats"></div></div><div class="card"><div class="head">手動入力 成績</div><div class="input-help">成績リセットの前に、ここからホーム選手の年間成績を直接入力できます。</div><div class="manual-tools"><button class="save" onclick="openManualStats()">手動入力を開く</button><button class="btn2" onclick="closeManualStats()">閉じる</button></div><div id="manualStatsBox" class="manual-stats"><div id="manualStatsArea" class="manual-grid"></div><div class="manual-tools"><button class="save" onclick="saveManualStats()">手動成績を保存</button><button class="btn2" onclick="closeManualStats()">閉じる</button></div></div></div><div class="card"><div class="head">保存データ バックアップ</div><div class="backup-note">選手名、成績、試合状況をJSONファイルに保存できます。Safariの履歴削除や機種変更の前に書き出してください。</div><div class="backup-tools"><button class="save" type="button" onclick="exportBackup()">バックアップを書き出し</button><button class="btn2" type="button" onclick="chooseBackupFile()">バックアップを読み込み</button><input id="backupFile" type="file" accept="application/json,.json" onchange="importBackupFile(this)"></div><div class="backup-status" id="backupStatus">未実行</div></div><button class="btn2" onclick="resetStats()">成績リセット</button></div>
   <div id="input" class="page">
@@ -725,7 +726,7 @@ function applyTtsExcelPatterns(text){let out=String(text||'');TTS_EXCEL_PATTERNS
 function isTtsEnabled(){return Commentary.settings.voiceEnabled}
 function setTtsEnabled(on){Commentary.settings.voiceEnabled=!!on;localStorage.setItem('bb_commentary_settings_v1',JSON.stringify(Commentary.settings));Commentary.init()}
 function speakPlayText(text){Commentary.speak(text)}
-function installTtsToggle(){if($('ttsToggleBtn')){Commentary.init();return}const host=document.querySelector('#live .field-actions')||document.querySelector('.field-actions');if(!host)return;const btn=document.createElement('button');btn.id='ttsToggleBtn';btn.className='commentary-live-toggle';btn.type='button';btn.onclick=()=>Commentary.toggleVoice();host.parentNode.insertBefore(btn,host.nextSibling);Commentary.init()}
+function installTtsToggle(){if($('ttsToggleBtn')){Commentary.init();return}const host=document.querySelector('#live .field-actions')||document.querySelector('.field-actions');if(!host)return;const anchor=$('fieldMenuBox')||host,btn=document.createElement('button');btn.id='ttsToggleBtn';btn.className='commentary-live-toggle';btn.type='button';btn.onclick=()=>Commentary.toggleVoice();anchor.parentNode.insertBefore(btn,anchor.nextSibling);Commentary.init()}
 
 function runnerStateText(){let bases=[];if(st.r&&st.r[1])bases.push('1塁');if(st.r&&st.r[2])bases.push('2塁');if(st.r&&st.r[3])bases.push('3塁');if(bases.length===3)return '満塁';return bases.length?bases.join('・'):'ランナーなし'}
 function outStateText(){return Math.min(3,Number(st.o)||0)+'アウト'}
@@ -950,14 +951,14 @@ function openOperationSpecialMenu(){
   $('fm').classList.add('show');
   fitMenuButtons();
 }
-function closeOperationMenu(){closeSheets();const liveTab=document.querySelector('.tabs button[data-t="live"]');if(liveTab)liveTab.click()}
+function closeOperationMenu(){closeSheets()}
 function renderOps(){
   const items=[
     ['hit','ヒット','openOperationPositionMenu(\'hit\')'],['double','二塁打','openOperationPositionMenu(\'double\')'],['triple','三塁打','openOperationPositionMenu(\'triple\')'],
     ['homerun','ホームラン','openOperationPositionMenu(\'homerun\')'],['out','アウト','openOperationPositionMenu(\'out\')'],['special','特殊','openOperationSpecialMenu()'],
     ['error','失策','openOperationPositionMenu(\'error\')'],['undo','取り消し','act(\'undo\')'],['close','閉じる','closeOperationMenu()']
   ];
-  $('opbox').innerHTML=`<div class="field-menu-grid">${items.map(x=>`<button type="button" class="field-menu-btn field-menu-${x[0]}" onclick="${x[2]}" aria-label="${x[1]}">${operationIcon(x[0])}<span>${x[1]}</span></button>`).join('')}</div>`;
+  $('fieldMenuBox').innerHTML=`<div class="field-menu-grid">${items.map(x=>`<button type="button" class="field-menu-btn field-menu-${x[0]}" onclick="${x[2]}" aria-label="${x[1]}">${operationIcon(x[0])}<span>${x[1]}</span></button>`).join('')}</div>`;
 }
 function score(){let top=st.first==='away'?'away':'home',bot=top==='away'?'home':'away';return `<table><thead><tr><th class="team"></th>${[1,2,3,4,5,6,7,8,9].map(n=>`<th>${n}</th>`).join('')}<th>計</th><th>安</th><th>失</th></tr></thead><tbody>${[top,bot].map(t=>`<tr><td class="team">${(t==='home'?st.home:st.away).slice(0,4)}</td>${st.score[t].map((v,i)=>`<td class="${side()===t&&innIndex()===i?'now':''}">${v==null?'':v}</td>`).join('')}<td class="sum">${st.total[t]}</td><td class="sum">${st.hits[t]}</td><td class="sum">${st.err[t]}</td></tr>`).join('')}</tbody></table>`}
 function renderInputs(){['home','away'].forEach(t=>{$(t+'Input').innerHTML=`<div class="lineup-head"><div>順</div><div>守備</div><div>選手名</div><div>フリガナ</div></div>`+st.players[t].map((p,i)=>`<div class="lineup-row"><div class="lineup-no">${i+1}${i<9?'番':''}</div><select id="${t}pos${i}" aria-label="${i+1}番 守備位置">${POS.map(x=>`<option ${p.pos===x?'selected':''}>${x}</option>`).join('')}</select><input id="${t}name${i}" value="${p.name||''}" placeholder="${i<9?'スタメン選手名':'ベンチ選手名'}" aria-label="${i+1}番 選手名"><input id="${t}ruby${i}" value="${p.ruby||''}" placeholder="読み上げ用" aria-label="${i+1}番 フリガナ"></div>`).join('')})}
@@ -986,7 +987,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.que
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='subTeam')renderSub()});
 renderOps();addEventListener('resize',place);render(true);Account.refresh();
 let startTab=new URLSearchParams(location.search).get('tab');if(startTab&&$(startTab)){let b=document.querySelector(`.tabs button[data-t="${startTab}"]`);if(b)b.click()}
-const APP_BUILD='v131-hit-runner-flow';
+const APP_BUILD='v132-field-menu-location';
 function refreshToLatest(){let url=new URL(location.href);url.searchParams.set('v',APP_BUILD);location.replace(url.toString())}
 function setupAutoUpdate(){
   if(!('serviceWorker' in navigator))return;

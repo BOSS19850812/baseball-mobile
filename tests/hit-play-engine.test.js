@@ -187,6 +187,11 @@ assert.ok(confirmSource.indexOf('snap()') < confirmSource.indexOf('st.hits'), 's
 assert.match(indexSource, /c\.__commentaryHistoryLength=Commentary\.historyLength\(\)/);
 assert.match(indexSource, /Commentary\.restoreHistoryLength\(historyLength\)/);
 assert.match(indexSource, /if\(\/\^hit\[123\]:\/\.test\(c\)&&!\/FC\/\.test\(c\)\)return HitFlow\.start\(c\)/);
-assert.match(indexSource, /const APP_BUILD='v131-hit-runner-flow'/);
+assert.match(indexSource, /<div class="field-actions">[\s\S]*?<div id="fieldMenuBox"><\/div>/);
+assert.doesNotMatch(indexSource, /id="opbox"/);
+assert.match(indexSource, /\$\('fieldMenuBox'\)\.innerHTML=/);
+assert.match(indexSource, /function closeOperationMenu\(\)\{closeSheets\(\)\}/);
+assert.match(indexSource, /const anchor=\$\('fieldMenuBox'\)\|\|host/);
+assert.match(indexSource, /const APP_BUILD='v132-field-menu-location'/);
 
 console.log(`hit-play-engine: ${scenarioCount} matrix scenarios + focused regressions passed`);

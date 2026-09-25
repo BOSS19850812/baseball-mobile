@@ -1,4 +1,4 @@
-const CACHE_NAME = "baseball-mobile-v131-hit-runner-flow";
+const CACHE_NAME = "baseball-mobile-v132-field-menu-location";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
